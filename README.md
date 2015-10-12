@@ -4,6 +4,7 @@
 * Timing module (`rtk.timing`)
 * Debugging module (`rtk.pdb`)
 * libDAI python interface (`rtk.pgm.dai`)
+* Parallel run module (`rtk.par`)
 
 ## Upcoming
 * Experiment results management
