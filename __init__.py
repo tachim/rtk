@@ -1,4 +1,4 @@
 import par
-import pdb
+import debug
 import pgm
 import timing

@@ -2,7 +2,7 @@
 
 ## Implemented
 * Timing module (`rtk.timing`)
-* Debugging module (`rtk.pdb`)
+* Debugging module (`rtk.debug`)
 * libDAI python interface (`rtk.pgm.dai`)
 * Parallel run module (`rtk.par`)
 
