@@ -2,6 +2,7 @@
 
 ## Implemented
 * Timing module (`rtk.timing`)
+* Stats tracking (`rtk.stats`)
 * Debugging module (`rtk.debug`)
 * libDAI python interface (`rtk.pgm.dai`)
 * Parallel run module (`rtk.par`)
