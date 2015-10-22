@@ -20,5 +20,8 @@ def pmap(fn, args_kwargs, verbose=True):
         if verbose:
             print '>>>>>>>>>>> PROGRESS:', job_ind+1, '/', len(args_kwargs), 'done'
         ret[arg_ind] = result
+
+        if verbose:
+            print 'Args remaining:', [arg for i, arg in enumerate(args_kwargs) if ret[i] == None]
     p.close()
     return ret
