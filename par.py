@@ -3,7 +3,7 @@ import multiprocessing as mp
 def wrapper_fcn((fn, (i, args_kwargs))):
     return i, fn(*args_kwargs[0], **args_kwargs[1])
 
-def pmap(fn, args_kwargs, verbose=True):
+def pmap(fn, args_kwargs, verbose=True, super_verbose=False):
     """ Multiprocessing abstraction that includes a progress meter.
         Usage:
             def foo(x): return x * 2
@@ -21,7 +21,7 @@ def pmap(fn, args_kwargs, verbose=True):
             print '>>>>>>>>>>> PROGRESS:', job_ind+1, '/', len(args_kwargs), 'done'
         ret[arg_ind] = result
 
-        if verbose:
+        if super_verbose:
             print 'Args remaining:', [arg for i, arg in enumerate(args_kwargs) if ret[i] == None]
     p.close()
     return ret
