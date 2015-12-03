@@ -3,8 +3,9 @@ import numpy as np
 import random
 
 def wrapper_fcn((fn, (i, args_kwargs))):
-    np.random.seed(i)
-    random.seed(i)
+    seed = int(random.random() * 100000)
+    np.random.seed(seed)
+    random.seed(seed)
     return i, fn(*args_kwargs[0], **args_kwargs[1])
 
 def pmap(fn, args_kwargs, verbose=True, super_verbose=False):
