@@ -1,9 +1,9 @@
 import numpy as np
 
 def generate(n, strength=3):
+    # create W and remove everything including and below the diagonal
     W = np.random.random((n, n)) * 2 - 1
-    W = np.triu(W)
-    np.fill_diagonal(W, 0)
+    W = np.triu(W, k=1)
     f = np.random.random((n,)) * 2 -1 
     return W * strength, f * strength
 
