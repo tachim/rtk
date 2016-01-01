@@ -1,7 +1,10 @@
 import debug
+import lin
+import m
 import par
 import pgm
 import plot
+import rand
 import stats
 import timing
 import system
