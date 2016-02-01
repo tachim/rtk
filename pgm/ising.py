@@ -7,6 +7,25 @@ def generate(n, strength=3):
     f = np.random.random((n,)) * 2 -1 
     return W * strength, f * strength
 
+def generate_grid(m, w=1, field=1):
+    W = np.zeros((m*m, m*m))
+    for i in xrange(m):
+        for j in xrange(m):
+            for (ni, nj) in [(i-1, j), (i+1, j), (i, j-1), (i, j+1)]:
+                if ni < 0 or nj < 0 or ni >= m or nj >= m:
+                    continue
+
+                center_ind = i * m + j
+                neighbor_ind = ni * m + nj
+                row = min(center_ind, neighbor_ind)
+                col = max(center_ind, neighbor_ind)
+
+                W[row, col] = np.random.random() * w * 2 - w
+
+    f = np.random.random(m*m) * field * 2 - field
+
+    return W, f
+
 def write_uai(W, f, filename):
     assert filename.endswith('.uai')
     n = W.shape[0]

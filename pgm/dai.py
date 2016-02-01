@@ -14,7 +14,7 @@ def exact_marginals(fg_filename):
     return marginals
 
 def _logZ_runner(filename, option):
-    p = subprocess.Popen([os.path.join(os.path.dirname(__file__), 'run_dai_logz'), fg_filename, option],
+    p = subprocess.Popen([os.path.join(os.path.dirname(__file__), 'run_dai_logz'), filename, option],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE)
     p.wait()
