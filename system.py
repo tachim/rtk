@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 
@@ -17,5 +18,8 @@ def run(cmd, capture_stdout=True, ignore_ret=False, print_stdout=False):
     else:
         retval = subprocess.Popen(cmd).wait()
         if retval != 0 and not ignore_ret: raise RetCode()
+
+def ls(d):
+    return [os.path.join(d, f) for f in os.listdir(d)]
 
 tmpf = tempfile.mkstemp
