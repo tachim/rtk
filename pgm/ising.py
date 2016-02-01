@@ -7,6 +7,44 @@ def generate(n, strength=3):
     f = np.random.random((n,)) * 2 -1 
     return W * strength, f * strength
 
+def write_uai(W, f, filename):
+    assert filename.endswith('.uai')
+    n = W.shape[0]
+
+    valid_pair_factors = []
+    for i in xrange(n):
+        for j in xrange(n):
+            if W[i, j] != 0:
+                valid_pair_factors.append((i, j))
+    valid_single_factors = range(n)
+
+    with open(filename, 'w') as f_out:
+        lines = []
+        lines.append('MARKOV')
+        lines.append('%d' % n)
+        lines.append(' '.join(map(str, [2] * n)))
+        lines.append(str(len(valid_pair_factors) + len(valid_single_factors)))
+
+        for var in valid_single_factors:
+            lines.append('1 %d' % var)
+
+        for i, j in valid_pair_factors:
+            lines.append('2 %d %d' % (i, j))
+
+        for i in valid_single_factors:
+            lines.append('2')
+            lines.append('%.20f %.20f\n' % (np.exp(-f[i]), np.exp(f[i])))
+
+        for i, j in valid_pair_factors:
+            lines.append('4') # number of variables in factor
+            pos_prob = np.exp(W[i, j])
+            neg_prob = np.exp(-W[i, j])
+            lines.append('%.20f%.20f\n%.20f\n%.20f\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
+
+        f_out.write('\n'.join(lines))
+
+    print 'Wrote Ising model to', filename
+
 def write_fg(W, f, filename):
     assert filename.endswith('.fg')
     n = W.shape[0]
@@ -33,3 +71,5 @@ def write_fg(W, f, filename):
             pos_prob = np.exp(W[i, j])
             neg_prob = np.exp(-W[i, j])
             f_out.write('0 %.20f\n1 %.20f\n2 %.20f\n3 %.20f\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
+
+    print 'Wrote Ising model to', filename
