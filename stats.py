@@ -17,20 +17,19 @@ class OnlineMoments(object):
     def __init__(self):
         self.mu = None
         self.var = None
-        self.n = 0.0
+        self.w = 0.0
 
     def __enter__(self): return self
     def __exit__(self, *args): return
 
-    def report(self, x):
-        if self.n == 0:
+    def report(self, x, weight=1):
+        if self.w == 0:
             self.mu = x
             self.var = 0
         else:
-            mu_new = self.mu * (self.n / (self.n + 1)) + x / (self.n + 1)
+            mu_new = self.mu * (self.w / (self.w + weight)) + x / (self.w + weight)
             delta = mu_new - self.mu
-            var_new = self.var + self.n * delta ** 2 + (x - mu_new) ** 2
+            var_new = self.var + self.w * delta ** 2 + weight * (x - mu_new) ** 2
             self.mu = mu_new
             self.var = var_new
-        self.n += 1
-
+        self.w += weight
