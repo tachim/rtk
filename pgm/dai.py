@@ -13,25 +13,24 @@ def exact_marginals(fg_filename):
     marginals = [float(l.split()[2][:-2]) for l in output if l.startswith('(')]
     return marginals
 
-def exact_log_partition(fg_filename):
-    assert fg_filename.endswith('.fg')
-    p = subprocess.Popen([os.path.join(os.path.dirname(__file__), 'run_jtree'), fg_filename],
+def _logZ_runner(filename, option):
+    p = subprocess.Popen([os.path.join(os.path.dirname(__file__), 'run_dai_logz'), fg_filename, option],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE)
     p.wait()
     output = p.stdout.read().split('\n')
     log_partition_line = [l for l in output if l.startswith('Log partition')]
-    exact = float(log_partition_line[0].split()[-1])
-    return exact
+    logZ = float(log_partition_line[0].split()[-1])
+    return logZ
 
-def trwbp_upper_bound(fg_filename):
-    assert fg_filename.endswith('.fg')
-    path = os.path.join(os.path.dirname(__file__), 'run_trwbp')
-    p = subprocess.Popen([path, fg_filename],
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE)
-    p.wait()
-    output = p.stdout.read().split('\n')
-    log_partition_line = [l for l in output if l.startswith('Log partition')]
-    upper_bound = float(log_partition_line[0].split()[-1])
-    return upper_bound
+def mf_logZ(filename):
+    return _logZ_runner(filename, 'MF')
+
+def trwbp_logZ(filename):
+    return _logZ_runner(filename, 'TRWBP')
+
+def bp_logZ(filename):
+    return _logZ_runner(filename, 'BP')
+
+def jtree_logZ(filename):
+    return _logZ_runner(filename, 'JTREE')
