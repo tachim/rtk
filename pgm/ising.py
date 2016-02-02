@@ -11,7 +11,8 @@ def generate_grid(m, w=1, field=1):
     W = np.zeros((m*m, m*m))
     for i in xrange(m):
         for j in xrange(m):
-            for (ni, nj) in [(i-1, j), (i+1, j), (i, j-1), (i, j+1)]:
+            wij = 2 * (np.random.random() - 0.5) * w
+            for (ni, nj) in [(i+1, j), (i, j+1)]:
                 if ni < 0 or nj < 0 or ni >= m or nj >= m:
                     continue
 
@@ -20,9 +21,9 @@ def generate_grid(m, w=1, field=1):
                 row = min(center_ind, neighbor_ind)
                 col = max(center_ind, neighbor_ind)
 
-                W[row, col] = np.random.random() * w * 2 - w
+                W[row, col] = wij
 
-    f = np.random.random(m*m) * field * 2 - field
+    f = (np.random.random(m*m) - 0.5) * 2 * field
 
     return W, f
 
