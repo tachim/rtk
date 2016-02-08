@@ -3,7 +3,7 @@ import random
 
 def seed(seed):
     random.seed(seed)
-    np.random.seed(random.getstate()[1][0])       
+    np.random.seed(seed)
 
 def ones(shape):
     return np.random.randint(0, 2, shape)
