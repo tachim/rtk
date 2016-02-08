@@ -4,12 +4,13 @@ Based on JoHo's original code.
 
 """
 
+import os
 import subprocess
 import tempfile
 
 def create_pbs_script(
         commands, outputfiles, jobname, queue, nodes, outputdir,
-        walltime):
+        walltime, ppn=1):
     assert len(commands) == len(outputfiles)
     template = '''#!/bin/bash
 
@@ -51,14 +52,14 @@ echo "PBS DURATION: $(echo $END_TIME - $START_TIME | bc)" >> $outputfile
 
     timeout_n_sec = hh * 3600 + mm * 60 + ss
     sleep_sec = 60
-    wall_sec = timeout_n_sec + sleep_sec
+    wall_sec = timeout_n_sec + sleep_sec + 20
 
     total_wall_hh = wall_sec / 3600
     total_wall_mm = (wall_sec % 3600) / 60
     total_wall_ss = wall_sec % 60
     total_wall_hhmmss = '%2.2d:%2.2d:%2.2d' % (total_wall_hh, total_wall_mm, total_wall_ss)
 
-    nodes='+'.join('%s:ppn=1,mem=5gb' % node for node in nodes)
+    nodes='+'.join('%s:ppn=%s,mem=5gb' % (node, ppn) for node in nodes)
     return template.format(
         jobname=jobname,
         queue=queue,
@@ -75,10 +76,17 @@ def run(base_args, commands, outputfiles):
     nodes = base_args.get('nodes', '1')
     queue = base_args['queue']
 
+    paired = zip(commands, outputfiles)
+    filtered = [(cmd, fout) for cmd, fout in paired if not os.path.exists(fout)]
+    if not filtered:
+        return
+    commands, outputfiles = zip(*filtered)
+
     script = create_pbs_script(
             commands, outputfiles, jobname, 
             queue, nodes, base_args['outputfile_dir'],
-            walltime=base_args.get('walltime', '00:20:00'))
+            walltime=base_args.get('walltime', '00:20:00'),
+            ppn=base_args.get('ppn', 1))
 
     print script
     print 'ok?'
