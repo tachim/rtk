@@ -59,7 +59,7 @@ def write_uai(W, f, filename):
             lines.append('4') # number of variables in factor
             pos_prob = np.exp(W[i, j])
             neg_prob = np.exp(-W[i, j])
-            lines.append('%.20f%.20f\n%.20f\n%.20f\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
+            lines.append('%.20f\n%.20f\n%.20f\n%.20f\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
 
         f_out.write('\n'.join(lines))
 
