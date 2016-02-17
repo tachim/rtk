@@ -9,5 +9,6 @@ import pgm
 import plot
 import rand
 import stats
+import tests
 import timing
 import system
