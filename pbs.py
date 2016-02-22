@@ -37,9 +37,11 @@ mkdir -p "`dirname \"$outputfile\"`" 2>/dev/null
 SLEEP_TIME=$(( ( RANDOM % {sleep_sec}) + 1))
 sleep $SLEEP_TIME
 
-cd $PBS_O_WORKDIR
+TMP_DIRECTORY=$(mktemp -d)
+
+cd $TMP_DIRECTORY
 echo "RUNNING ON $HOSTNAME" > $outputfile
-echo DIRECTORY IS $PBS_O_WORKDIR &>> $outputfile
+echo DIRECTORY IS $TMP_DIRECTORY &>> $outputfile
 pwd &>> $outputfile
 ls &>> $outputfile
 echo "AFS SLEEP $SLEEP_TIME" >> $outputfile
@@ -47,6 +49,9 @@ START_TIME=$( date +%s.%N )
 eval "timeout {timeout_n_sec} $cmd" &>> $outputfile
 END_TIME=$( date +%s.%N )
 echo "PBS DURATION: $(echo $END_TIME - $START_TIME | bc)" >> $outputfile
+
+# remove the temporary directory - only if there wasn't some dumb bug in creating it
+[[ ! -z $TMP_DIRECTORY ]] && rm -rf $TMP_DIRECTORY
 '''
     hh, mm, ss = map(int, walltime.split(':'))
 
@@ -70,6 +75,51 @@ echo "PBS DURATION: $(echo $END_TIME - $START_TIME | bc)" >> $outputfile
         total_wall_hhmmss=total_wall_hhmmss,
         sleep_sec=sleep_sec,
         timeout_n_sec=timeout_n_sec)
+
+def output_fname(outputfile_dir, args):
+    template = 'log_' + \
+            '_'.join('-:%s:{%s}:-' % (n,n) 
+                    for n in sorted(args.keys())) + \
+            '.LOG'
+    return os.path.join(outputfile_dir, template.format(**args))
+
+def _process_val(v):
+    try:
+        return float(v)
+    except:
+        return v
+
+def _args(fname):
+    ret = {}
+    start_inds = [i for i in range(len(fname))
+            if fname[i:i+2] == '-:']
+    colon_inds = [fname.find(':', start+2) for start in start_inds]
+    end_inds = [fname.find(':-', start+1) for start in colon_inds]
+
+    assert len(start_inds) == len(end_inds)
+    for start, end in zip(start_inds, end_inds):
+        assert start < end
+        kv = fname[start+2:end]
+        k, v = kv.split(':', 1)
+        ret[k] = _process_val(v)
+
+    assert len(ret), fname
+
+    return ret
+
+def job_duration(logfile_lines):
+    last_line = logfile_lines[-1]
+    if 'PBS DURATION' in last_line:
+        return float(logfile_lines[-1].split()[-1])
+    else:
+        return None
+
+def iter_logs(outputfile_dir):
+    for fname in os.listdir(outputfile_dir):
+        if not fname.endswith('.LOG'): continue
+        args = _args(fname)
+        with open(os.path.join(outputfile_dir, fname), 'r') as f:
+            yield (args, f.read().split('\n')[:-1])
 
 def run(base_args, commands, outputfiles):
     jobname = base_args['jobname']
