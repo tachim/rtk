@@ -139,7 +139,7 @@ def run(base_args, commands, outputfiles):
             ppn=base_args.get('ppn', 1))
 
     print script
-    print 'ok?'
+    print 'About to run %d jobs. ok?' % len(commands)
     raw_input()
     with tempfile.NamedTemporaryFile(suffix='.sh') as f:
         f.write(script)

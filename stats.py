@@ -33,3 +33,10 @@ class OnlineMoments(object):
             self.mu = mu_new
             self.var = var_new
         self.w += weight
+
+def aggregate_leaves(d, agg):
+    return dict(
+            (k, aggregate_leaves(v, agg) 
+                if isinstance(v, dict) 
+                else agg(v))
+            for k, v in d.iteritems())
