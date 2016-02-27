@@ -34,9 +34,12 @@ class OnlineMoments(object):
             self.var = var_new
         self.w += weight
 
+def _is_dict(d):
+    return isinstance(d, dict) or isinstance(d, collections.defaultdict)
+
 def aggregate_leaves(d, agg):
     return dict(
             (k, aggregate_leaves(v, agg) 
-                if isinstance(v, dict) 
+                if _is_dict(v)
                 else agg(v))
             for k, v in d.iteritems())
