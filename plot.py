@@ -15,10 +15,10 @@ def plot(x, y, title=None, xlabel=None, ylabel=None):
         plt.ylabel(ylabel)
     plt.show()
 
-_rt_ax = None
 _rt_plot_state = {}
 _last_plot_time = 0
 _plot_start = None
+_n_plots = 0
 
 def _subsample(lis, frac):
     stride = max(1, int(frac * len(lis)))
@@ -26,6 +26,9 @@ def _subsample(lis, frac):
 
 RTPlotState = collections.namedtuple('RTPlotState',
         ('x', 'y', 'xbuf', 'ybuf', 'line', 'n_so_far'))
+
+def _get_ax(i):
+    return plt.gcf().add_subplot(_n_plots, 1, i)
 
 def _clear_bufs():
     for key, state in _rt_plot_state.iteritems():
@@ -38,8 +41,10 @@ def _clear_bufs():
         state.line.set_xdata(state.x)
         state.line.set_ydata(state.y)
 
-    _rt_ax.relim() 
-    _rt_ax.autoscale_view(True,True,True)
+    for i in xrange(1, _n_plots+1):
+        _get_ax(i).relim()
+        _get_ax(i).autoscale_view(True, True, True)
+        _get_ax(i).legend()
     plt.pause(0.1)
 
 def _init_plot():
@@ -48,20 +53,21 @@ def _init_plot():
     _plot_start = time.time()
     plt.ion()
     plt.show()
-    _rt_ax = fig.add_subplot(111)
 
-def plot_rt_point(key, y, x=None):
+def plot_rt_point(key, y, plot_ind=1, x=None):
     fig = plt.gcf()
 
-    if _rt_ax is None:
+    if _n_plots == 0:
         _init_plot()
 
     if key not in _rt_plot_state:
+        global _n_plots
+        _n_plots = max(plot_ind, _n_plots)
+
         _rt_plot_state[key] = RTPlotState(
                 [], [], [], [], 
-                _rt_ax.plot([], [], marker='.', label=key)[0],
+                _get_ax(plot_ind).plot([], [], marker='.', label=key)[0],
                 [0])
-        _rt_ax.legend()
 
     plot_state = _rt_plot_state[key]
     x = x if x is not None else time.time() - _plot_start
@@ -75,7 +81,7 @@ def plot_rt_point(key, y, x=None):
         _last_plot_time = time.time()
 
 def _finish_plot():
-    if _rt_ax is not None:
+    if _n_plots > 0:
         print 'Done. Exit plot to exit program.'
         _clear_bufs()
         plt.ioff()
