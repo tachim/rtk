@@ -1,4 +1,27 @@
 import numpy as np
+import os
+import tempfile
+
+class IsingWriter(object):
+    def __init__(self, W, f):
+        self.W, self.f = W, f
+
+    def __enter__(self):
+        _, self.filename = tempfile.mkstemp(suffix='.fg')
+        write_fg(self.W, self.f, self.filename)
+        return self.filename
+
+    def __exit__(self, typ, val, tb):
+        pass
+        #os.remove(self.filename)
+
+def to_01_mrf(W, f):
+    n = W.shape[0]
+    _theta = W * 4
+    one = np.ones((n,1))
+    np.fill_diagonal(_theta, 2 * (f - one.T.dot(W) - one.T.dot(W.T)))
+    _theta[-1, 0] = W.sum() - f.sum()
+    return _theta
 
 def generate(n, strength=3):
     # create W and remove everything including and below the diagonal
@@ -29,6 +52,7 @@ def generate_grid(m, w=1, field=1):
 
 def write_uai(W, f, filename):
     assert filename.endswith('.uai')
+
     n = W.shape[0]
 
     valid_pair_factors = []
@@ -67,6 +91,7 @@ def write_uai(W, f, filename):
 
 def write_fg(W, f, filename):
     assert filename.endswith('.fg')
+
     n = W.shape[0]
 
     valid_pair_factors = []
@@ -81,7 +106,7 @@ def write_fg(W, f, filename):
 
         for i in valid_single_factors:
             f_out.write('1\n%d\n2\n2\n' % i)
-            f_out.write('0 %.20f\n1 %.20f\n' % (np.exp(-f[i]), np.exp(f[i])))
+            f_out.write('0 %.20f\n1 %.20f\n\n' % (np.exp(-f[i]), np.exp(f[i])))
 
         for i, j in valid_pair_factors:
             f_out.write('2\n') # number of variables in factor
@@ -90,6 +115,6 @@ def write_fg(W, f, filename):
             f_out.write('4\n') # number of nonempty entries in factor table
             pos_prob = np.exp(W[i, j])
             neg_prob = np.exp(-W[i, j])
-            f_out.write('0 %.20f\n1 %.20f\n2 %.20f\n3 %.20f\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
+            f_out.write('0 %.20f\n1 %.20f\n2 %.20f\n3 %.20f\n\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
 
     print 'Wrote Ising model to', filename
