@@ -1,5 +1,6 @@
 import alg
 import debug
+import fig
 import itr
 import lin
 import m
