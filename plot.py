@@ -2,6 +2,7 @@ import collections
 import functools
 import matplotlib.pyplot as plt
 import time
+import timing
 
 import atexit
 
@@ -83,9 +84,8 @@ def _wrap_pyplot(f):
 
 @_wrap_pyplot
 def reset_rt_plot():
-    global _rt_plot_state, _last_plot_time, _plot_start, _n_plots
+    global _rt_plot_state, _plot_start, _n_plots
     _rt_plot_state = {}
-    _last_plot_time = 0
     _plot_start = None
     _n_plots = 0
     plt.gcf().clf()
@@ -116,10 +116,8 @@ def plot_rt_point(key, y, plot_ind=1, x=None):
     plot_state.ybuf.append(y)
     plot_state.n_so_far[0] += 1
 
-    global _last_plot_time
-    if time.time() - _last_plot_time > 1:
+    if timing._register_exec(__name__, 'plot', 1):
         _clear_bufs()
-        _last_plot_time = time.time()
 
 def _finish_plot():
     if _n_plots > 0:

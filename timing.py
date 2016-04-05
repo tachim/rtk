@@ -33,6 +33,15 @@ class Logger(object):
         t[0] = t[0] * t[1] / (t[1] + 1) + duration / (t[1] + 1)
         t[1] = t[1] + 1
 
-        if int(t[1] - 1) % self.print_every == 0:
+        if _register_exec(__name__, 'logger%s' % self.name, self.print_every):
             print '<%s> over %d calls: %.4f. Last call: %.4f' % (
                     self.name, t[1], t[0], duration)
+
+_last_exec = {}
+
+def _register_exec(prefix, key, n_secs):
+    k = prefix + '|' + key
+    if _last_exec.get(k, 0) < time.time() - n_secs:
+        _last_exec[k] = time.time()
+        return True
+    return False
