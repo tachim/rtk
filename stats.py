@@ -56,7 +56,7 @@ def a_star_sample_convex(log_f, lower_bound, upper_bound):
         return _cache[p]
 
     def M((lb, ub)):
-        return max(log_f(lb), log_f(ub))
+        return max(conditional_log_mu(lb), conditional_log_mu(ub))
 
     def sample_g((lb, ub), trunc=None):
         mu = np.log(ub - lb)
@@ -97,6 +97,9 @@ def a_star_sample_convex(log_f, lower_bound, upper_bound):
         if region_g_val + conditional_log_mu(sample) > LB:
             LB = region_g_val + conditional_log_mu(sample)
             best_sample = sample
+
+        if False: # debug assertion
+            assert log_f(lb) >= log_f(sample) or log_f(ub) >= log_f(sample)
 
         mid = lb + (ub - lb) * 0.5
         l, r = (lb, mid), (mid, ub)
