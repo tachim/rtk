@@ -1,4 +1,6 @@
 import collections
+import heapq
+import numpy as np
 import time
 
 _means_counts = collections.defaultdict(lambda: [0., 0.])
@@ -43,3 +45,67 @@ def aggregate_leaves(d, agg):
                 if _is_dict(v)
                 else agg(v))
             for k, v in d.iteritems())
+
+def a_star_sample_convex(log_f, lower_bound, upper_bound):
+    """ A* sampling for 1D unnormalized distributions f that are convex. """
+    _cache = {}
+
+    def conditional_log_mu(p):
+        if p not in _cache:
+            _cache[p] = log_f(p)
+        return _cache[p]
+
+    def M((lb, ub)):
+        return max(log_f(lb), log_f(ub))
+
+    def sample_g((lb, ub), trunc=None):
+        mu = np.log(ub - lb)
+        if trunc is None:
+            return mu - np.log(-np.log(np.random.random()))
+        else:
+            return mu - np.log(np.exp(-trunc + mu) - np.log(np.random.random()))
+
+    def sample_nu((lb, ub)):
+        return lb + (ub - lb) * np.random.random()
+
+    pq = []
+    push = lambda (weight, g_val, bounds): heapq.heappush(pq, (-weight, g_val, bounds))
+    def pop():
+        weight, g_val, bounds = heapq.heappop(pq)
+        return -weight, g_val, bounds
+
+    bounds = (lower_bound, upper_bound)
+    g_val = sample_g(bounds)
+    push( (g_val + M(bounds), g_val, bounds) )
+
+    LB = -1e8
+    best_sample = None
+
+    n_rounds = 0
+
+    while pq:
+        n_rounds += 1
+        if n_rounds > 200:
+            assert False
+
+        weight, region_g_val, bounds = pop()
+        if weight < LB:
+            break
+
+        sample = sample_nu(bounds)
+        if region_g_val + conditional_log_mu(sample) > LB:
+            LB = region_g_val + conditional_log_mu(sample)
+            best_sample = sample
+
+        lb, ub = bounds
+        mid = lb + (ub - lb) * 0.5
+        l, r = (lb, mid), (mid, ub)
+
+        for part in (l, r):
+            part_g_val = sample_g(part, region_g_val)
+            if part_g_val + M(part) > LB:
+                push((part_g_val + M(part), part_g_val, part))
+
+    return best_sample
+
+
