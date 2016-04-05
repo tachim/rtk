@@ -89,6 +89,7 @@ def a_star_sample_convex(log_f, lower_bound, upper_bound):
             assert False
 
         weight, region_g_val, bounds = pop()
+        lb, ub = bounds
         if weight < LB:
             break
 
@@ -97,9 +98,9 @@ def a_star_sample_convex(log_f, lower_bound, upper_bound):
             LB = region_g_val + conditional_log_mu(sample)
             best_sample = sample
 
-        lb, ub = bounds
         mid = lb + (ub - lb) * 0.5
         l, r = (lb, mid), (mid, ub)
+        assert lb >= lower_bound and ub <= upper_bound
 
         for part in (l, r):
             part_g_val = sample_g(part, region_g_val)

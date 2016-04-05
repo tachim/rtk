@@ -1,4 +1,5 @@
 import collections
+import functools
 import matplotlib.pyplot as plt
 import time
 
@@ -15,6 +16,7 @@ def plot(x, y, title=None, xlabel=None, ylabel=None):
         plt.ylabel(ylabel)
     plt.show()
 
+_suppress_plots = False
 _rt_plot_state = {}
 _last_plot_time = 0
 _plot_start = None
@@ -54,14 +56,53 @@ def _init_plot():
     plt.ion()
     plt.show()
 
+class SuppressPlots(object):
+    def __init__(self, should_suppress=True):
+        self.should_suppress = should_suppress
+
+    def __enter__(self):
+        global _suppress_plots
+        if self.should_suppress:
+            self.old = _suppress_plots
+            _suppress_plots = True
+
+    def __exit__(self, *args):
+        global _suppress_plots
+        if self.should_suppress:
+            _suppress_plots = self.old
+
+def _wrap_pyplot(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except RuntimeError, e:
+            if 'DISPLAY' not in str(e):
+                raise
+    return wrapper
+
+@_wrap_pyplot
+def reset_rt_plot():
+    global _rt_plot_state, _last_plot_time, _plot_start, _n_plots
+    _rt_plot_state = {}
+    _last_plot_time = 0
+    _plot_start = None
+    _n_plots = 0
+    plt.gcf().clf()
+
+@_wrap_pyplot
 def plot_rt_point(key, y, plot_ind=1, x=None):
+    global _n_plots
+
+    if _suppress_plots:
+        return
+
     fig = plt.gcf()
 
     if _n_plots == 0:
         _init_plot()
 
     if key not in _rt_plot_state:
-        global _n_plots
         _n_plots = max(plot_ind, _n_plots)
 
         _rt_plot_state[key] = RTPlotState(
