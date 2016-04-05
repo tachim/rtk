@@ -12,8 +12,7 @@ class IsingWriter(object):
         return self.filename
 
     def __exit__(self, typ, val, tb):
-        pass
-        #os.remove(self.filename)
+        os.remove(self.filename)
 
 def to_01_mrf(W, f):
     n = W.shape[0]
