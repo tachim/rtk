@@ -5,7 +5,7 @@ import itr
 import lin
 import m
 import par
-import pbs
+import dist
 import pgm
 import plot
 import rand
