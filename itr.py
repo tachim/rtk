@@ -24,6 +24,14 @@ def d_keys(d, level=0):
             ret |= set(d_keys(v, level-1))
         return ret
 
+def iter_nested_d(d):
+    for k, v in d.iteritems():
+        if _is_d(v):
+            for key_tup, value in iter_nested_d(v):
+                yield (k,) + key_tup, value
+        else:
+            yield (k,), v
+
 class _NoDefault(object): pass
 
 def ig(*idxs, **kwargs):
@@ -41,10 +49,7 @@ def ig(*idxs, **kwargs):
         return ret
     return w
 
-def iter_nested_d(d):
-    for k, v in d.iteritems():
-        if _is_d(v):
-            for key_tup, value in iter_nested_d(v):
-                yield (k,) + key_tup, value
-        else:
-            yield (k,), v
+def itr_sublists(lis, length):
+    assert isinstance(lis, list)
+    for i in xrange(len(lis)-length+1):
+        yield lis[i:i+length]
