@@ -145,4 +145,3 @@ def run(base_args, commands, outputfiles):
         f.write(script)
         f.flush()
         subprocess.check_call('qsub -t %d-%d %s' % (1, len(commands), f.name), shell=True)
-
