@@ -129,10 +129,24 @@ def iter_results(experiment_id):
         WHERE experiment_id = %s
         ''', experiment_id):
 
-        args = json.loads(row['arguments'])
-        duration = row['completion_timestamp'] - row['job_start_timestamp']
-        result = pickle.loads(row['result'])
-        yield (args, duration, result)
+        try:
+            args = json.loads(row['arguments'])
+            duration = row['completion_timestamp'] - row['job_start_timestamp']
+            result = pickle.loads(row['result'])
+            yield (args, duration, result)
+        except:
+            print "Failed on", row
+            raise
+
+def completion_counts(experiment_id):
+    for row in query('''
+        SELECT SUM(if(result is not null, 1, 0)) n_completed,
+            COUNT(1) n_started
+        FROM results
+        WHERE experiment_id = %s
+        ''', experiment_id):
+
+        return row['n_completed'], row['n_started']
 
 def last_experiment():
     for row in query('''

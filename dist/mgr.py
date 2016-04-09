@@ -48,9 +48,11 @@ def create_jobs(run_directory, module, walltime, ppn):
     experiment_id = rtk.dist.db.gen_experiment_id()
 
     commands, outputfiles = [], []
+    trial_creations = []
     for trial_id, (function_name, args) in enumerate(job_buffer):
         module_func = '.'.join([module, function_name])
-        rtk.dist.db.create_trial(experiment_id, trial_id, run_directory, module_func, args)
+
+        trial_creations.append((experiment_id, trial_id, run_directory, module_func, args))
         command = 'python %s %s %s' % (runner_fname(), experiment_id, trial_id)
         outputfile = os.path.join(rtk.dist.config.output_dir, '%s_%s.log' % (experiment_id, trial_id))
 
@@ -66,4 +68,6 @@ def create_jobs(run_directory, module, walltime, ppn):
             }
 
     rtk.dist.pbs.run(base_args, commands, outputfiles)
+    for trial_creation in trial_creations:
+        rtk.dist.db.create_trial(*trial_creation)
     return experiment_id

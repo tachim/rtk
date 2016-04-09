@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import time
 
 import rtk
 
@@ -27,6 +28,15 @@ def main():
     experiment_id = args.experiment_id 
     if experiment_id == 'last':
         experiment_id = rtk.dist.db.last_experiment()
+        print 'Experiment is', experiment_id
+
+    complete, started = rtk.dist.db.completion_counts(experiment_id)
+    while complete != started:
+        print '%d complete out of %d' % (complete, started)
+        time.sleep(5)
+        complete, started = rtk.dist.db.completion_counts(experiment_id)
+
+    print 'Analyzing logs for %d results' % complete
 
     stats = None
     ordered_keys = None
