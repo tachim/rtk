@@ -17,6 +17,7 @@ with rtk.pgm.ising.IsingWriter(W, f) as filename:
 ```
 ### Distributed Experiment Management
 Running your code in a distributed way on your cluster is super easy. These instructions assume you're using PBS and are tested thoroughly on the Stanford clusters, but it's trivial to modify `rtk.dist.mgr` to handle other cluster systems.
+
 1. Install MySQL and make sure it's somewhere accessible from your cluster machines.
 2. Configure `rtk.dist.config` with the authentication/connection information of your database.
 3. Run `rtk.dist.db.create_db()` to create the experiment results table.
