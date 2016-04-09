@@ -133,3 +133,12 @@ def iter_results(experiment_id):
         duration = row['completion_timestamp'] - row['job_start_timestamp']
         result = pickle.loads(row['result'])
         yield (args, duration, result)
+
+def last_experiment():
+    for row in query('''
+        SELECT experiment_id FROM results
+        WHERE result IS NOT NULL
+        ORDER BY completion_timestamp DESC
+        LIMIT 1
+        '''):
+        return row['experiment_id']
