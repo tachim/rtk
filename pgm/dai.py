@@ -18,7 +18,9 @@ def _logZ_runner(filename, option):
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE)
     p.wait()
-    output = p.stdout.read().split('\n')
+    output = p.stdout.read().split('\n') + p.stderr.read().split('\n')
+    if any('not converged' in l for l in output):
+        print 'WARNING: FAILED TO CONVERGE!'
     log_partition_line = [l for l in output if l.startswith('Log partition')]
     logZ = float(log_partition_line[0].split()[-1])
     return logZ

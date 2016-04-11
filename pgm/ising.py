@@ -3,16 +3,17 @@ import os
 import tempfile
 
 class IsingWriter(object):
-    def __init__(self, W, f):
-        self.W, self.f = W, f
+    def __init__(self, W, f, remove=True):
+        self.W, self.f, self.remove = W, f, remove
 
     def __enter__(self):
         _, self.filename = tempfile.mkstemp(suffix='.fg')
         write_fg(self.W, self.f, self.filename)
-        return self.filename
+        return self
 
     def __exit__(self, typ, val, tb):
-        os.remove(self.filename)
+        if self.remove:
+            os.remove(self.filename)
 
 def to_01_mrf(W, f):
     n = W.shape[0]
