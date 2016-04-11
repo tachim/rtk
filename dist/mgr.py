@@ -1,6 +1,7 @@
 import functools
 import json
 import os
+import socket
 
 import rtk
 
@@ -11,7 +12,10 @@ def distributed(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         if not in_dist_creation:
-            return f(*args, **kwargs)
+            print 'Calling', f.__name__, 'with args', kwargs
+            ret = f(*args, **kwargs)
+            print 'Result:', ret
+            return ret
         else:
             assert args == (), args
             _ = json.dumps(kwargs) # check that it works
@@ -20,6 +24,7 @@ def distributed(f):
 
 class Dist(object):
     def __init__(self, module_filename, walltime='00:10:00', ppn=1):
+        self.ignore_dist = 'scail' not in socket.gethostname()
         self.path = os.path.dirname(module_filename)
         self.module = os.path.splitext(os.path.basename(module_filename))[0]
 
@@ -28,18 +33,20 @@ class Dist(object):
 
     def __enter__(self):
         global in_dist_creation
-        assert in_dist_creation is False
-        in_dist_creation = True
+        if not self.ignore_dist:
+            assert in_dist_creation is False
+            in_dist_creation = True
 
     def __exit__(self, typ, val, tb):
-        global in_dist_creation
-        in_dist_creation = False
+        if not self.ignore_dist:
+            global in_dist_creation
+            in_dist_creation = False
 
-        if typ is not None:
-            return
+            if typ is not None:
+                return
 
-        experiment_id = create_jobs(self.path, self.module, self.walltime, self.ppn)
-        print "Created experiment %s" % experiment_id
+            experiment_id = create_jobs(self.path, self.module, self.walltime, self.ppn)
+            print "Created experiment %s" % experiment_id
 
 def runner_fname():
     return os.path.join(os.path.realpath(os.path.dirname(__file__)), 'run.py')

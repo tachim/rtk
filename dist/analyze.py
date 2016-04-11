@@ -6,6 +6,8 @@ import numpy as np
 import random
 import time
 
+from astropy.io import ascii
+
 import rtk
 
 def reorder_keys(args_keys, agg_key, cmp_key):
@@ -17,8 +19,39 @@ def reorder_keys(args_keys, agg_key, cmp_key):
     ret.append(agg_key)
     return ret
 
+def aggregate(args, results):
+    results = np.array(results)
+    if args.log_space:
+        return rtk.m.logsumexp(results) - np.log(results.shape[0])
+    else:
+        return results.mean()
+
+def print_results(args, colnames, stats):
+
+    colnames = colnames + ['n_samples']
+    colvals = [[] for _ in xrange(len(colnames))]
+
+    for keys, val in rtk.itr.iter_nested_d(stats):
+        i = 0
+        for k in keys:
+            colvals[i].append(k)
+            i += 1
+        colvals[i].append(aggregate(args, val))
+        i += 1
+
+        colvals[i].append(len(val))
+
+    ascii.write(colvals, 
+            Writer=ascii.FixedWidthTwoLine, 
+            names=colnames,
+            bookend=True, 
+            delimiter='|',
+            delimiter_pad=' ')
+
 def main():
     parser = ap.ArgumentParser()
+    parser.add_argument('--log_space', action='store_true', default=False,
+            help='Assume data is in log space when aggregating.')
     parser.add_argument('experiment_id', type=str)
     parser.add_argument('agg_key', type=str)
     parser.add_argument('cmp_key', type=str)
@@ -31,7 +64,7 @@ def main():
         print 'Experiment is', experiment_id
 
     complete, started = rtk.dist.db.completion_counts(experiment_id)
-    while complete != started:
+    while complete < int(0.9 * started):
         print '%d complete out of %d' % (complete, started)
         time.sleep(5)
         complete, started = rtk.dist.db.completion_counts(experiment_id)
@@ -52,8 +85,7 @@ def main():
         d = rtk.itr.ig(*keys[:-2])(stats)
         d[keys[-2]].append(result[args.result_ind])
 
-    for keys, val in rtk.itr.iter_nested_d(stats):
-        print keys, np.array(val).mean()
+    print_results(args, ordered_keys, stats)
 
 if __name__ == '__main__':
     rtk.debug.wrap(main)()

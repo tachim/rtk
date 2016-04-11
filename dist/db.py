@@ -123,11 +123,13 @@ def mark_done(experiment_id, trial_id, results):
         ''', completion, results, experiment_id, trial_id)
 
 def iter_results(experiment_id):
+    n_failed, n_total = 0, 0
     for row in query('''
         SELECT trial_id, arguments, job_start_timestamp, completion_timestamp, result
         FROM results
         WHERE experiment_id = %s
         ''', experiment_id):
+        n_total += 1
 
         try:
             args = json.loads(row['arguments'])
@@ -136,7 +138,10 @@ def iter_results(experiment_id):
             yield (args, duration, result)
         except:
             print "Failed on", row
-            raise
+            n_failed += 1
+            continue
+    if n_failed:
+        print '%d failed out of %d in iter_results(%s)' % (n_failed, n_total, experiment_id)
 
 def completion_counts(experiment_id):
     for row in query('''
