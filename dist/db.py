@@ -137,7 +137,7 @@ def iter_results(experiment_id):
             result = pickle.loads(row['result'])
             yield (args, duration, result)
         except:
-            print "Failed on", row
+            #print "Failed on", row
             n_failed += 1
             continue
     if n_failed:
