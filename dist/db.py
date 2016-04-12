@@ -22,9 +22,7 @@ def gen_conn():
         db=config.db['db'],
         connect_timeout=5)
 
-print 'Connecting to MySQL... (should print Done. in a second)'
 gen_conn()
-print 'Done.'
 
 class ErrIntegrity(BaseException): pass
 
@@ -58,12 +56,21 @@ def create_db():
     db_name = '%s_experiments' % username
 
     query('''
+        CREATE TABLE experiment_metadata (
+        experiment_id VARCHAR(255) NOT NULL,
+        title LONGTEXT,
+        PRIMARY KEY(experiment_id)
+        ) Engine=InnoDB
+        ''')
+
+    query('''
         CREATE TABLE results(
         experiment_id VARCHAR(255) NOT NULL,
         trial_id BIGINT NOT NULL,
         directory LONGTEXT NOT NULL,
         function LONGTEXT NOT NULL,
         arguments LONGTEXT NOT NULL,
+        title LONGTEXT,
         result LONGBLOB,
         creation_timestamp BIGINT NOT NULL,
         job_start_timestamp BIGINT,
@@ -105,6 +112,14 @@ def fetch_args(experiment_id, trial_id):
         ''', experiment_id, trial_id):
         return row['directory'], row['function'], json.loads(row['arguments'])
     assert False  
+
+def fetch_title(experiment_id):
+    for row in query('''
+        select title from experiment_metadata
+        where experiment_id = %s
+        ''', experiment_id):
+        return row['title']
+    return None  
 
 def mark_start(experiment_id, trial_id):
     start_time = int(time.time() * 1e6)
@@ -161,3 +176,11 @@ def last_experiment():
         LIMIT 1
         '''):
         return row['experiment_id']
+
+def set_title(experiment_id, title):
+    query('''
+        insert into experiment_metadata
+        (experiment_id, title)
+        VALUES
+        (%s, %s)
+        ''', experiment_id, title)

@@ -74,7 +74,9 @@ def create_jobs(run_directory, module, walltime, ppn):
             'outputfile_dir': rtk.dist.config.output_dir,
             }
 
-    rtk.dist.pbs.run(base_args, commands, outputfiles)
+    title = rtk.dist.pbs.run(base_args, commands, outputfiles)
     for trial_creation in trial_creations:
         rtk.dist.db.create_trial(*trial_creation)
+    rtk.dist.db.set_title(experiment_id, title)
+
     return experiment_id

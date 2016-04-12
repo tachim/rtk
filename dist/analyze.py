@@ -86,8 +86,8 @@ def main():
     for experiment_id in args.experiment_ids.split(','):
         if experiment_id == 'last':
             experiment_id = rtk.dist.db.last_experiment()
-            print 'Experiment is', experiment_id
         experiment_ids.append(experiment_id)
+        print '%s: %s' % (experiment_id, rtk.dist.db.fetch_title(experiment_id))
 
         complete, started = rtk.dist.db.completion_counts(experiment_id)
         while complete < int(0.85 * started):

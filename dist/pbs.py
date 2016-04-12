@@ -139,9 +139,10 @@ def run(base_args, commands, outputfiles):
             ppn=base_args.get('ppn', 1))
 
     print script
-    print 'About to run %d jobs. ok?' % len(commands)
-    raw_input()
+    title = raw_input("Enter a title for these %d jobs: " % len(commands))
     with tempfile.NamedTemporaryFile(suffix='.sh') as f:
         f.write(script)
         f.flush()
         subprocess.check_call('qsub -t %d-%d %s' % (1, len(commands), f.name), shell=True)
+
+    return title
