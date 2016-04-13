@@ -11,14 +11,15 @@ job_buffer = []
 def distributed(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        assert args == (), args
+        kwargs = json.dumps(kwargs)
+        kwargs = json.loads(kwargs)
         if not in_dist_creation:
             print 'Calling', f.__name__, 'with args', kwargs
-            ret = f(*args, **kwargs)
+            ret = f(**kwargs)
             print 'Result:', ret
             return ret
         else:
-            assert args == (), args
-            _ = json.dumps(kwargs) # check that it works
             job_buffer.append((f.__name__, kwargs))
     return wrapper
 
