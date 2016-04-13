@@ -12,7 +12,7 @@ from astropy.io import ascii
 import rtk
 
 def process_keys(args_keys, agg_key, cmp_key, result_keys):
-    assert agg_key in args_keys and cmp_key in args_keys
+    #assert agg_key in args_keys and cmp_key in args_keys
 
     stats_keys = sorted([k for k in args_keys if k != agg_key and k != cmp_key])
     stats_keys.append(cmp_key)
@@ -77,10 +77,12 @@ def main():
     parser.add_argument('result_keys', type=str)
     args = parser.parse_args()
 
-    result_keys = args.result_keys.split(',')
-    for i in xrange(len(result_keys)):
-        try: result_keys[i] = int(result_keys[i])
-        except: pass
+    result_accessors_raw = args.result_keys.split(',')
+    result_accessors = []
+    for i in xrange(len(result_accessors_raw)):
+        def wrapper(ind):
+            return lambda r: eval(result_accessors_raw[ind])
+        result_accessors.append(wrapper(i))
 
     experiment_ids = []
     for experiment_id in args.experiment_ids.split(','):
@@ -104,16 +106,21 @@ def main():
             [rtk.dist.db.iter_results(experiment_id)
                 for experiment_id in experiment_ids]):
         if stats is None:
-            stats_keys, all_columns = process_keys(f_args.keys(), args.agg_key, args.cmp_key, result_keys)
+            stats_keys, all_columns = process_keys(f_args.keys(), args.agg_key, args.cmp_key, result_accessors_raw)
             stats = rtk.itr.dd(list, len(stats_keys))
 
-        keys = [f_args[k] for k in stats_keys]
-        keysets.add(tuple(keys))
+        if args.agg_key == 'None':
+            print f_args['alpha_perturb'][1], result
+        else:
 
-        d = rtk.itr.ig(*keys[:-1])(stats)
-        d[keys[-1]].append([result[result_key] for result_key in result_keys])
+            keys = map(str, [f_args[k] for k in stats_keys])
+            keysets.add(tuple(keys))
 
-    print_results(args, all_columns, stats)
+            d = rtk.itr.ig(*keys[:-1])(stats)
+            d[keys[-1]].append([acc(result) for acc in result_accessors])
+
+    if args.agg_key != 'None':
+        print_results(args, all_columns, stats)
 
 if __name__ == '__main__':
     rtk.debug.wrap(main)()
