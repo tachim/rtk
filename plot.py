@@ -127,3 +127,34 @@ def _finish_plot():
         plt.show()
 
 atexit.register(_finish_plot)
+
+
+#######################################################
+# Gaussians
+# from http://www.nhsilbert.net/source/2014/06/bivariate-normal-ellipse-plotting-in-python/
+#######################################################
+
+def plot_cov_ellipse(cov, pos, volume=.5, ax=None, fc='none', ec=[0,0,0], a=1, lw=2):
+    import numpy as np
+    from scipy.stats import chi2
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+
+    def eigsorted(cov):
+        vals, vecs = np.linalg.eigh(cov)
+        order = vals.argsort()[::-1]
+        return vals[order], vecs[:,order]
+
+    if ax is None:
+        ax = plt.gca()
+
+    vals, vecs = eigsorted(cov)
+    theta = np.degrees(np.arctan2(*vecs[:,0][::-1]))
+
+    kwrg = {'facecolor':fc, 'edgecolor':ec, 'alpha':a, 'linewidth':lw}
+
+    # Width and height are "full" widths, not radius
+    width, height = 2 * np.sqrt(chi2.ppf(volume,2)) * np.sqrt(vals)
+    ellip = Ellipse(xy=pos, width=width, height=height, angle=theta, **kwrg)
+
+    ax.add_artist(ellip)
