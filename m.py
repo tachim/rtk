@@ -9,6 +9,9 @@ def binom(n, k):
 
 logsumexp = scipy.misc.logsumexp
 
+def mean_sumexp(x):
+    return logsumexp(x) - np.log(len(x))
+
 def normalize_logprobs(log_probs):
     # Given n unnormalized log weights, return the normalized 
     # version of exp(log_probs). This involves a neat log-space

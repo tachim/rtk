@@ -30,6 +30,14 @@ def generate(n, strength=3):
     f = np.random.random((n,)) * 2 -1 
     return W * strength, f * strength
 
+def generate_dense(m, w=1, field=1):
+    W = 2 * (np.random.random((m*m, m*m)) - 0.5) * w
+    W[np.tril_indices(m*m, 0)] = 0
+    assert np.abs(np.diag(W)).sum() == 0
+
+    f = (np.random.random(m*m) - 0.5) * 2 * field
+    return W, f
+
 def generate_grid(m, w=1, field=1):
     W = np.zeros((m*m, m*m))
     for i in xrange(m):
@@ -87,8 +95,6 @@ def write_uai(W, f, filename):
 
         f_out.write('\n'.join(lines))
 
-    print 'Wrote Ising model to', filename
-
 def write_fg(W, f, filename):
     assert filename.endswith('.fg')
 
@@ -116,5 +122,3 @@ def write_fg(W, f, filename):
             pos_prob = np.exp(W[i, j])
             neg_prob = np.exp(-W[i, j])
             f_out.write('0 %.20f\n1 %.20f\n2 %.20f\n3 %.20f\n\n' % (pos_prob, neg_prob, neg_prob, pos_prob))
-
-    print 'Wrote Ising model to', filename
