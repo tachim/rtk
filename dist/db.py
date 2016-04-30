@@ -1,6 +1,7 @@
 import argparse as ap
 from collections import defaultdict as dd
 import cPickle as pickle
+import itertools
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -105,6 +106,21 @@ def create_trial(experiment_id, trial_id, directory, function, arguments):
         (%s, %s, %s, %s, %s, %s)
         ''', experiment_id, trial_id, directory, function, args, creation_timestamp)
 
+def _iter_failed_trials(experiment_id):
+    n_failed, n_total = 0, 0
+    for row in query('''
+        SELECT trial_id
+        FROM results
+        WHERE experiment_id = %s and completion_timestamp is null
+        ''', experiment_id):
+        n_total += 1
+        yield (experiment_id, row['trial_id'])
+
+def iter_failed_trials(experiment_ids):
+    return itertools.chain(*[
+        _iter_failed_trials(eid) for eid in experiment_ids.split(',')
+        ])
+
 def fetch_args(experiment_id, trial_id):
     for row in query('''
         select directory, function, arguments from results
@@ -137,10 +153,10 @@ def mark_done(experiment_id, trial_id, results):
         WHERE experiment_id = %s AND trial_id = %s
         ''', completion, results, experiment_id, trial_id)
 
-def iter_results(experiment_id):
+def _iter_results(experiment_id):
     n_failed, n_total = 0, 0
     for row in query('''
-        SELECT trial_id, arguments, job_start_timestamp, completion_timestamp, result
+        SELECT function, trial_id, arguments, job_start_timestamp, completion_timestamp, result
         FROM results
         WHERE experiment_id = %s
         ''', experiment_id):
@@ -150,13 +166,18 @@ def iter_results(experiment_id):
             args = json.loads(row['arguments'])
             duration = row['completion_timestamp'] - row['job_start_timestamp']
             result = pickle.loads(row['result'])
-            yield (args, duration, result)
+            yield (row['function'], args, duration, result)
         except:
             #print "Failed on", row
             n_failed += 1
             continue
     if n_failed:
         print '%d failed out of %d in iter_results(%s)' % (n_failed, n_total, experiment_id)
+
+def iter_results(experiment_ids):
+    return itertools.chain(*[
+        _iter_results(eid) for eid in experiment_ids.split(',')
+        ])
 
 def completion_counts(experiment_id):
     for row in query('''
@@ -181,6 +202,6 @@ def set_title(experiment_id, title):
     query('''
         insert into experiment_metadata
         (experiment_id, title)
-        VALUES
-        (%s, %s)
-        ''', experiment_id, title)
+        values (%s, %s)
+        on duplicate key update title = %s
+        ''', experiment_id, title, title)

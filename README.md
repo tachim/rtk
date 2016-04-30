@@ -25,13 +25,15 @@ Running your code in a distributed way on your cluster is super easy. These inst
 
 ```python
 @rtk.dist.mgr.distributed
-def run_trial(seed, sidelength, weight, method):
+def run_trial():
+   seed = rtk.dist.mgr.p('seed')
    your_code_here()
 
 with rtk.dist.mgr.Dist(os.path.realpath(__file__)):
     for i, (weight, trial, sidelength) in enumerate(params):
         for method in ('structure', 'anneal'):
-            run_trial(seed=trial, sidelength=sidelength, weight=weight, method=method)
+            with rtk.dist.mgr.Params(seed=trial, sidelength=sidelength, weight=weight, method=method):
+                run_trial()
 ```
 Once this is running, go ahead and use the swiss-army knife analysis script to quickly get a handle on the results:
 ```
@@ -47,6 +49,12 @@ Analyzing logs for 60 results
 (6, 8, u'structure') 132.173962252
 ```
 which tells the script to look at the **last** experiment, aggregating along key **seed** (these correspond to our trials), and making sure to put the **method** key last so we can quickly compare the results. So we can see that there's not much difference between the methods above :).
+
+### Statistics
+
+There is an implementation of [A\* sampling](https://github.com/tachim/rtk/blob/master/stats.py#L49) for
+convex distributions, and the code can be easily adapted for other distributions by tweaking the
+bounds functions.
 
 ## Status
                                                               

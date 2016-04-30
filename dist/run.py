@@ -20,7 +20,9 @@ def main():
     module_name, function_name = function.split('.')
     module = __import__(module_name)
     rtk.dist.db.mark_start(args.experiment_id, args.trial_id)
-    result = getattr(module, function_name)(**arguments)
+
+    with rtk.dist.mgr.Params(**arguments):
+        result = getattr(module, function_name)()
     rtk.dist.db.mark_done(args.experiment_id, args.trial_id, result)
 
 if __name__ == '__main__':

@@ -121,15 +121,18 @@ def iter_logs(outputfile_dir):
         with open(os.path.join(outputfile_dir, fname), 'r') as f:
             yield (args, f.read().split('\n')[:-1])
 
-def run(base_args, commands, outputfiles):
+def run(base_args, commands, outputfiles, force=False):
     jobname = base_args['jobname']
     nodes = base_args.get('nodes', '1')
     queue = base_args['queue']
 
     paired = zip(commands, outputfiles)
-    filtered = [(cmd, fout) for cmd, fout in paired if not os.path.exists(fout)]
-    if not filtered:
-        return
+    if not force:
+        filtered = [(cmd, fout) for cmd, fout in paired if not os.path.exists(fout)]
+        if not filtered:
+            return
+    else:
+        filtered = paired
     commands, outputfiles = zip(*filtered)
 
     script = create_pbs_script(

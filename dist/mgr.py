@@ -1,3 +1,4 @@
+import cPickle as pickle
 import functools
 import json
 import os
@@ -8,18 +9,47 @@ import rtk
 in_dist_creation = False
 job_buffer = []
 
+_params = {}
+_params_printed = set()
+
+class Params(object):
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    def __enter__(self):
+        global _params
+        self.old_params = _params
+        _params = self.kwargs
+
+    def __exit__(self, *args):
+        global _params
+        _params = self.old_params
+        _params_printed.clear()
+
+def p(name):
+    ret = _params.get(name)
+    if name not in _params_printed:
+        print 'rtk::dist::mgr params[%s]=%s' % (name, ret)
+        _params_printed.add(name)
+    return ret
+
 def distributed(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        print 'in_dist_creation:', in_dist_creation
         assert args == (), args
         kwargs = json.dumps(kwargs)
         kwargs = json.loads(kwargs)
         if not in_dist_creation:
-            print 'Calling', f.__name__, 'with args', kwargs
+            print 'Calling', '%s(%s)' % (f.__name__, ', '.join('%s=%s' % (k, v) for k, v in
+                kwargs.iteritems()))
             ret = f(**kwargs)
-            print 'Result:', ret
+            ret = pickle.loads(pickle.dumps(ret, pickle.HIGHEST_PROTOCOL))
+            print 'Result:', str(ret)[:100] + ' ... '
             return ret
         else:
+            additional = _params or {}
+            kwargs = dict(kwargs.items() + _params.items())
             job_buffer.append((f.__name__, kwargs))
     return wrapper
 

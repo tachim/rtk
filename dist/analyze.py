@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse as ap
 from collections import defaultdict as dd
 import itertools
@@ -102,7 +104,7 @@ def main():
     stats = None
     stats_keys, all_columns = None, None
     keysets = set()
-    for f_args, duration, result in itertools.chain(*
+    for fn, f_args, duration, result in itertools.chain(*
             [rtk.dist.db.iter_results(experiment_id)
                 for experiment_id in experiment_ids]):
         if stats is None:
@@ -113,7 +115,7 @@ def main():
             print f_args['alpha_perturb'][1], result
         else:
 
-            keys = map(str, [f_args[k] for k in stats_keys])
+            keys = map(str, [f_args.get(k, 'NULL') for k in stats_keys])
             keysets.add(tuple(keys))
 
             d = rtk.itr.ig(*keys[:-1])(stats)
