@@ -31,6 +31,8 @@ RTPlotState = collections.namedtuple('RTPlotState',
         ('x', 'y', 'xbuf', 'ybuf', 'line', 'n_so_far'))
 
 def _get_ax(i):
+    global _n_plots
+    _n_plots = max(_n_plots, i)
     return plt.gcf().add_subplot(_n_plots, 1, i)
 
 def _clear_bufs():
@@ -46,16 +48,17 @@ def _clear_bufs():
 
     for i in xrange(1, _n_plots+1):
         _get_ax(i).relim()
-        _get_ax(i).autoscale_view(True, True, True)
+        _get_ax(i).autoscale_view(tight=True, scalex=True, scaley=True)
         _get_ax(i).legend()
     plt.pause(0.1)
 
 def _init_plot():
     global _plot_start, _rt_ax
-    fig = plt.gcf()
-    _plot_start = time.time()
-    plt.ion()
-    plt.show()
+    if _n_plots == 0:
+        fig = plt.gcf()
+        _plot_start = time.time()
+        plt.ion()
+        plt.show()
 
 class SuppressPlots(object):
     def __init__(self, should_suppress=True):
@@ -99,8 +102,7 @@ def plot_rt_point(key, y, plot_ind=1, x=None):
 
     fig = plt.gcf()
 
-    if _n_plots == 0:
-        _init_plot()
+    _init_plot()
 
     if key not in _rt_plot_state:
         _n_plots = max(plot_ind, _n_plots)
@@ -145,8 +147,7 @@ def plot_cov_ellipse(cov, pos, volume=.5, ax=None, fc='none', ec=[0,0,0], a=1, l
         order = vals.argsort()[::-1]
         return vals[order], vecs[:,order]
 
-    if ax is None:
-        ax = plt.gca()
+    ax = ax or plt.gca()
 
     vals, vecs = eigsorted(cov)
     theta = np.degrees(np.arctan2(*vecs[:,0][::-1]))
@@ -156,5 +157,4 @@ def plot_cov_ellipse(cov, pos, volume=.5, ax=None, fc='none', ec=[0,0,0], a=1, l
     # Width and height are "full" widths, not radius
     width, height = 2 * np.sqrt(chi2.ppf(volume,2)) * np.sqrt(vals)
     ellip = Ellipse(xy=pos, width=width, height=height, angle=theta, **kwrg)
-
     ax.add_artist(ellip)

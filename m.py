@@ -9,7 +9,7 @@ def binom(n, k):
 
 logsumexp = scipy.misc.logsumexp
 
-def mean_sumexp(x):
+def mean_logsumexp(x):
     return logsumexp(x) - np.log(len(x))
 
 def normalize_logprobs(log_probs):
