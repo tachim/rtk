@@ -9,7 +9,7 @@ import random
 
 import json
 import time
-import MySQLdb
+
 
 import config
 
@@ -23,7 +23,12 @@ def gen_conn():
         db=config.db['db'],
         connect_timeout=5)
 
-gen_conn()
+try:
+    import MySQLdb
+    conn = None
+    gen_conn()
+except:
+    print 'Couldn\'t import mysql.'
 
 class ErrIntegrity(BaseException): pass
 
