@@ -31,8 +31,6 @@ RTPlotState = collections.namedtuple('RTPlotState',
         ('x', 'y', 'xbuf', 'ybuf', 'line', 'n_so_far'))
 
 def _get_ax(i):
-    global _n_plots
-    _n_plots = max(_n_plots, i)
     return plt.gcf().add_subplot(_n_plots, 1, i)
 
 def _clear_bufs():
@@ -49,16 +47,17 @@ def _clear_bufs():
     for i in xrange(1, _n_plots+1):
         _get_ax(i).relim()
         _get_ax(i).autoscale_view(tight=True, scalex=True, scaley=True)
-        _get_ax(i).legend()
+        _get_ax(i).legend(loc='upper left')
+
     plt.pause(0.1)
 
-def _init_plot():
-    global _plot_start, _rt_ax
-    if _n_plots == 0:
-        fig = plt.gcf()
-        _plot_start = time.time()
-        plt.ion()
-        plt.show()
+def _init_plot(n_plots):
+    global _n_plots, _plot_start, _rt_ax
+    _n_plots = n_plots
+    fig = plt.gcf()
+    _plot_start = time.time()
+    plt.ion()
+    plt.show()
 
 class SuppressPlots(object):
     def __init__(self, should_suppress=True):
@@ -95,18 +94,15 @@ def reset_rt_plot():
 
 @_wrap_pyplot
 def plot_rt_point(key, y, plot_ind=1, x=None):
-    global _n_plots
-
     if _suppress_plots:
         return
 
     fig = plt.gcf()
 
-    _init_plot()
+    assert _n_plots > 0
+    assert plot_ind <= _n_plots
 
     if key not in _rt_plot_state:
-        _n_plots = max(plot_ind, _n_plots)
-
         _rt_plot_state[key] = RTPlotState(
                 [], [], [], [], 
                 _get_ax(plot_ind).plot([], [], marker='.', label=key)[0],
