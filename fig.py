@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 
-def largify():
+def largify(inches=(30, 10)):
     plt.tick_params(axis='both', labelsize=30)
-    plt.gcf().set_size_inches(30, 10)
+    plt.gcf().set_size_inches(*inches)
 
 def u(d, **kwargs):
     for k, v in kwargs.iteritems():

@@ -36,7 +36,6 @@ def p(name):
 def distributed(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        print 'in_dist_creation:', in_dist_creation
         assert args == (), args
         kwargs = json.dumps(kwargs)
         kwargs = json.loads(kwargs)
