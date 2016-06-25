@@ -53,3 +53,8 @@ def itr_sublists(lis, length):
     assert isinstance(lis, list)
     for i in xrange(len(lis)-length+1):
         yield lis[i:i+length]
+
+def neg(f):
+    def w(*args, **kwargs):
+        return not f(*args, **kwargs)
+    return w
