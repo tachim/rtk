@@ -5,6 +5,8 @@ import os
 import subprocess
 import tempfile
 
+import numpy as np
+
 class RetCode(Exception): pass
 
 def run(cmd, capture_stdout=True, ignore_ret=False, print_stdout=False):
@@ -29,7 +31,8 @@ def filecached(dir='/tmp/', version=1):
     def dec(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            k = hashlib.md5(str((f.__name__, version) + tuple(args) + tuple(kwargs.items()))).hexdigest()
+            key_args = [a.tobytes() if isinstance(a, np.ndarray) else a for a in args]
+            k = hashlib.md5(str((f.__name__, version) + tuple(key_args) + tuple(kwargs.items()))).hexdigest()
             fname = os.path.join(dir, f.__name__ + ':' + k + '.pickle')
             if not os.path.exists(fname):
                 ret = f(*args, **kwargs)
