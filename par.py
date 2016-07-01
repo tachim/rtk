@@ -11,7 +11,7 @@ def wrapper_fcn((fn, (i, args_kwargs))):
 
 def process_args_kwargs(args_kwargs):
     if isinstance(args_kwargs[0], tuple) and \
-            type(args_kwargs[0][0] in (list, tuple) and \
+            type(args_kwargs[0][0]) in (list, tuple) and \
             type(args_kwargs[0][1]) in (dict,):
         return args_kwargs
     else:
