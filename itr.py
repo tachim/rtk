@@ -58,3 +58,6 @@ def neg(f):
     def w(*args, **kwargs):
         return not f(*args, **kwargs)
     return w
+
+def take(itr, n):
+    return [e for i, e in enumerate(itr) if i < n]

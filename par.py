@@ -2,12 +2,18 @@ import multiprocessing as mp
 import numpy as np
 import random
 import time
+import traceback
 
 def wrapper_fcn((fn, (i, args_kwargs))):
     seed = int(random.random() * 100000)
     np.random.seed(seed)
     random.seed(seed)
-    return i, fn(*args_kwargs[0], **args_kwargs[1])
+    try:
+        return i, fn(*args_kwargs[0], **args_kwargs[1])
+    except:
+        print 'EXCEPTION WITH ARGS:', fn, args_kwargs
+        traceback.print_exc()
+        return i, None
 
 def process_args_kwargs(args_kwargs):
     if isinstance(args_kwargs[0], tuple) and \
@@ -26,7 +32,8 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
     """
     try:
         args_kwargs = process_args_kwargs(args_kwargs)
-        n_procs = n_procs or mp.cpu_count()
+        n_procs = n_procs or mp.cpu_count() - 1
+        print 'Using', n_procs, 'processes.'
         p = mp.Pool(n_procs)
         ret = [None] * len(args_kwargs)
 
