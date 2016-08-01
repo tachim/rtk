@@ -4,6 +4,8 @@ import random
 import time
 import traceback
 
+import timing
+
 def wrapper_fcn((fn, (i, args_kwargs))):
     seed = int(random.random() * 100000)
     np.random.seed(seed)
@@ -49,7 +51,7 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
             num_remaining = len(args_kwargs) - n_completed
             eta = avg_time * num_remaining
 
-            if verbose:
+            if verbose and timing._register_exec(__file__, 'pmap', 5):
                 print '>>>>>>>>>>> PROGRESS:', job_ind+1, '/', len(args_kwargs), 'done. ETA:', eta
             ret[arg_ind] = result
 
