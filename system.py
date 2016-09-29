@@ -43,4 +43,20 @@ def filecached(dir='/tmp/', version=1):
         return wrapper
     return dec
 
-tmpf = tempfile.mkstemp
+def makedirs(directory):
+    try:
+        os.makedirs(directory)
+    except Exception, e:
+        if 'File exists' not in str(e):
+            raise
+
+def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15):
+    cmd = ['ffmpeg', '-framerate', str(framerate), 
+            '-i', '%s/%s' % (directory, pattern), 
+            '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
+            '%s/out.mp4' % directory, '-y',
+            ]
+    run(cmd, capture_stdout=False, print_stdout=True)
+
+def tmpf(*args, **kwargs):
+    return tempfile.mkstemp(*args, **kwargs)[1]

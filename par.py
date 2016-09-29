@@ -3,6 +3,7 @@ import numpy as np
 import random
 import time
 import traceback
+import sys
 
 import timing
 
@@ -11,10 +12,13 @@ def wrapper_fcn((fn, (i, args_kwargs))):
     np.random.seed(seed)
     random.seed(seed)
     try:
-        return i, fn(*args_kwargs[0], **args_kwargs[1])
+        print '.',; sys.stdout.flush()
+        ret = fn(*args_kwargs[0], **args_kwargs[1])
+        return i, ret
     except:
-        print 'EXCEPTION WITH ARGS:', fn, args_kwargs
+        print 'EXCEPTION WITH ARGS:', (str(fn) + str(args_kwargs))[:100]
         traceback.print_exc()
+        sys.stdout.flush()
         return i, None
 
 def process_args_kwargs(args_kwargs):
@@ -36,6 +40,7 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
         args_kwargs = process_args_kwargs(args_kwargs)
         n_procs = n_procs or mp.cpu_count() - 1
         print 'Using', n_procs, 'processes.'
+        mp.freeze_support()
         p = mp.Pool(n_procs)
         ret = [None] * len(args_kwargs)
 
@@ -51,13 +56,16 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
             num_remaining = len(args_kwargs) - n_completed
             eta = avg_time * num_remaining
 
-            if verbose and timing._register_exec(__file__, 'pmap', 5):
-                print '>>>>>>>>>>> PROGRESS:', job_ind+1, '/', len(args_kwargs), 'done. ETA:', eta
+            if verbose and timing._register_exec(__file__, 'pmap', 20):
+                print '\n>>>>>>>>>>> PROGRESS:', job_ind+1, '/', len(args_kwargs), 'done. ETA:', eta
             ret[arg_ind] = result
 
             if super_verbose:
                 print 'Args remaining:', [arg for i, arg in enumerate(args_kwargs) if ret[i] == None]
-        p.close()
+        p.terminate()
+        p.join()
+        del p
+        print '\n>>>>>>>>>>> DONE.', job_ind+1, '/', len(args_kwargs)
         return ret
     except Exception, e:
         # If there was an exception thrown above, then re-run it single-threaded until we hit
