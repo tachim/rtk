@@ -51,10 +51,11 @@ def makedirs(directory):
             raise
 
 def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15):
+    last_dir = os.path.split(directory)[-1]
     cmd = ['ffmpeg', '-framerate', str(framerate), 
             '-i', '%s/%s' % (directory, pattern), 
             '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
-            '%s/out.mp4' % directory, '-y',
+            '%s/%s_out.mp4' % (last_dir, directory), '-y',
             ]
     run(cmd, capture_stdout=False, print_stdout=True)
 
