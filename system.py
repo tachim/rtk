@@ -55,7 +55,7 @@ def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15):
     cmd = ['ffmpeg', '-framerate', str(framerate), 
             '-i', '%s/%s' % (directory, pattern), 
             '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
-            '%s/%s_out.mp4' % (last_dir, directory), '-y',
+            '%s/%s_out.mp4' % (directory, last_dir), '-y',
             ]
     run(cmd, capture_stdout=False, print_stdout=True)
 
