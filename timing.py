@@ -17,6 +17,9 @@ _timestamps = {}
 def reset(k):
     _timings[k] = [0., 0.]
 
+def reset_all():
+    _timings.clear()
+
 class Logger(object):
     def __init__(self, name, print_every=1):
         self.name = name
