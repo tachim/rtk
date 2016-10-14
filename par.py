@@ -12,7 +12,8 @@ def wrapper_fcn((fn, (i, args_kwargs))):
     np.random.seed(seed)
     random.seed(seed)
     try:
-        print '.',; sys.stdout.flush()
+        if False:
+            print '.',; sys.stdout.flush()
         ret = fn(*args_kwargs[0], **args_kwargs[1])
         return i, ret
     except:
@@ -29,6 +30,8 @@ def process_args_kwargs(args_kwargs):
     else:
         return [([a], {}) for a in args_kwargs]
 
+_pool_state = (None, None)
+
 def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
     """ Multiprocessing abstraction that includes a progress meter.
         Usage:
@@ -36,12 +39,16 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
             pmap(foo, [([1], {}), ([2], {})]) => [2, 4]
 
     """
+    global _pool_state
     try:
         args_kwargs = process_args_kwargs(args_kwargs)
         n_procs = n_procs or mp.cpu_count() - 1
-        print 'Using', n_procs, 'processes.'
+        if verbose:
+            print 'Using', n_procs, 'processes.'
         mp.freeze_support()
-        p = mp.Pool(n_procs)
+        if _pool_state[1] is None or _pool_state[1] != n_procs:
+            _pool_state = (mp.Pool(n_procs), n_procs)
+        p = _pool_state[0]
         ret = [None] * len(args_kwargs)
 
         processed_args = [(fn, (i, a_k)) for i, a_k in enumerate(args_kwargs)]
@@ -62,10 +69,12 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
 
             if super_verbose:
                 print 'Args remaining:', [arg for i, arg in enumerate(args_kwargs) if ret[i] == None]
-        p.terminate()
-        p.join()
-        del p
-        print '\n>>>>>>>>>>> DONE.', job_ind+1, '/', len(args_kwargs)
+        if False:
+            p.terminate()
+            p.join()
+            del p
+        if verbose:
+            print '\n>>>>>>>>>>> DONE.', job_ind+1, '/', len(args_kwargs)
         return ret
     except Exception, e:
         # If there was an exception thrown above, then re-run it single-threaded until we hit
