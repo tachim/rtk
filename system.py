@@ -53,13 +53,16 @@ def makedirs(directory):
 
 def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15):
     last_dir = filter(bool, directory.split('/'))[-1]
+    movie_path = '%s/%s_out.mp4' % (directory, last_dir)
+    print 'Saving movie to %s/%s_out.mp4' % (directory, last_dir)
     cmd = ['ffmpeg', '-framerate', str(framerate), 
             '-i', '%s/%s' % (directory, pattern), 
             '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
             '-vf', 'scale=600:400',
-            '%s/%s_out.mp4' % (directory, last_dir), '-y',
+            movie_path, '-y',
             ]
     run(cmd, capture_stdout=False, print_stdout=True)
+    return movie_path
 
 def tmpf(*args, **kwargs):
     return tempfile.mkstemp(*args, **kwargs)[1]
