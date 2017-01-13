@@ -21,9 +21,11 @@ def reset_all():
     _timings.clear()
 
 class Logger(object):
-    def __init__(self, name, print_every=1):
+    def __init__(self, name, print_every=1, reset_timing=True):
         self.name = name
         self.print_every = print_every
+        if reset_timing:
+            reset(self.name)
 
     def __enter__(self):
         assert self.name not in _timestamps

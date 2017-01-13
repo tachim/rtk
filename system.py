@@ -4,6 +4,7 @@ import hashlib
 import os
 import subprocess
 import tempfile
+from glob import glob
 
 import numpy as np
 

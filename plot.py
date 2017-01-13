@@ -6,6 +6,23 @@ import timing
 
 import atexit
 
+nr, nc = 1, 1
+
+def figure(*args, **kwargs):
+    global nr, nc 
+    nr, nc = 1, 1
+    plt.figure(*args, **kwargs)
+
+def sp(r, c, figsize=5):
+    global nr, nc
+    nr = max(r+1, nr)
+    nc = max(c+1, nc)
+    plt.gcf().set_size_inches(nc*figsize, nr*figsize)
+    for i in xrange(len(plt.gcf().axes)):
+        plt.gcf().axes[i].change_geometry(nr, nc, i+1)
+    plt.gcf().add_subplot(nr, nc, r*nc + c + 1)
+    plt.gcf().subplots_adjust()
+
 def plot(x, y, title=None, xlabel=None, ylabel=None):
     plt.plot(x, y)
     
