@@ -21,9 +21,10 @@ def reset_all():
     _timings.clear()
 
 class Logger(object):
-    def __init__(self, name, print_every=1, reset_timing=True):
+    def __init__(self, name, print_every=10, reset_timing=False, n_expected=None):
         self.name = name
         self.print_every = print_every
+        self.n_expected = n_expected
         if reset_timing:
             reset(self.name)
 
@@ -39,8 +40,15 @@ class Logger(object):
         t[1] = t[1] + 1
 
         if _register_exec(__name__, 'logger%s' % self.name, self.print_every):
-            print '<%s> over %d calls: %.4f. Last call: %.4f' % (
-                    self.name, t[1], t[0], duration)
+            print '<%s> over %d calls: %.4f. Last call: %.4f. ' % (
+                    self.name, t[1], t[0], duration),
+            if self.n_expected is not None:
+                n_completed = float(t[1])
+                n_remaining = self.n_expected - n_completed
+                time_remaining = t[0] * n_remaining
+                
+                print '%.4fs remaining.' % time_remaining,
+            print
 
 _last_exec = {}
 

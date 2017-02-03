@@ -27,6 +27,8 @@ def process_args_kwargs(args_kwargs):
             type(args_kwargs[0][0]) in (list, tuple) and \
             type(args_kwargs[0][1]) in (dict,):
         return args_kwargs
+    elif isinstance(args_kwargs[0], dict):
+        return [([], a) for a in args_kwargs]
     else:
         return [([a], {}) for a in args_kwargs]
 

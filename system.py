@@ -28,13 +28,31 @@ def run(cmd, capture_stdout=True, ignore_ret=False, print_stdout=False):
 def ls(d):
     return [os.path.join(d, f) for f in os.listdir(d)]
 
+def _get_key(f, version, args, kwargs):
+    key_args = [a.tobytes() if isinstance(a, np.ndarray) else a for a in args]
+    return hashlib.md5(str((f.__name__, version) + tuple(key_args) + tuple(kwargs.items()))).hexdigest()
+
+_memcache = {}
+
+def memcached():
+    def dec(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            k = _get_key(f, None, args, kwargs)
+            if k not in _memcache:
+                _memcache[k] = f(*args, **kwargs)
+            return _memcache[k]
+        return wrapper
+    return dec
+
+
 def filecached(dir='/tmp/', version=1):
     def dec(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            key_args = [a.tobytes() if isinstance(a, np.ndarray) else a for a in args]
-            k = hashlib.md5(str((f.__name__, version) + tuple(key_args) + tuple(kwargs.items()))).hexdigest()
+            k = _get_key(f, version, args, kwargs)
             fname = os.path.join(dir, f.__name__ + ':' + k + '.pickle')
+            print fname
             if not os.path.exists(fname):
                 ret = f(*args, **kwargs)
                 with open(fname, 'wb') as fptr:
@@ -51,14 +69,14 @@ def makedirs(directory):
         if 'File exists' not in str(e):
             raise
 
-def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15):
+def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale='600:400'):
     last_dir = filter(bool, directory.split('/'))[-1]
     movie_path = '%s/%s_out.mp4' % (directory, last_dir)
     print 'Saving movie to %s/%s_out.mp4' % (directory, last_dir)
     cmd = ['ffmpeg', '-framerate', str(framerate), 
             '-i', '%s/%s' % (directory, pattern), 
             '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
-            '-vf', 'scale=600:400',
+            '-vf', 'scale=%s' % scale,
             movie_path, '-y',
             ]
     run(cmd, capture_stdout=False, print_stdout=True)

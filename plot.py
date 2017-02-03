@@ -8,10 +8,14 @@ import atexit
 
 nr, nc = 1, 1
 
-def figure(*args, **kwargs):
+def reset():
     global nr, nc 
     nr, nc = 1, 1
+    plt.gcf().clear()
+
+def figure(*args, **kwargs):
     plt.figure(*args, **kwargs)
+    reset()
 
 def sp(r, c, figsize=5):
     global nr, nc
