@@ -77,6 +77,7 @@ def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale='6
             '-i', '%s/%s' % (directory, pattern), 
             '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
             '-vf', 'scale=%s' % scale,
+            '-loglevel', 'quiet',
             movie_path, '-y',
             ]
     run(cmd, capture_stdout=False, print_stdout=True)

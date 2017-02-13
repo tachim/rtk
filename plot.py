@@ -3,6 +3,7 @@ import functools
 import matplotlib.pyplot as plt
 import time
 import timing
+import matplotlib.gridspec as gridspec
 
 import atexit
 
@@ -17,15 +18,16 @@ def figure(*args, **kwargs):
     plt.figure(*args, **kwargs)
     reset()
 
-def sp(r, c, figsize=5):
+def sp(r, c, figheight=5, figwidth=5, suppress_resize=False):
     global nr, nc
     nr = max(r+1, nr)
     nc = max(c+1, nc)
-    plt.gcf().set_size_inches(nc*figsize, nr*figsize)
-    for i in xrange(len(plt.gcf().axes)):
-        plt.gcf().axes[i].change_geometry(nr, nc, i+1)
+    plt.gcf().set_size_inches(nc*figwidth, nr*figheight)
+    if not suppress_resize:
+        for i in xrange(len(plt.gcf().axes)):
+            plt.gcf().axes[i].change_geometry(nr, nc, i+1)
     plt.gcf().add_subplot(nr, nc, r*nc + c + 1)
-    plt.gcf().subplots_adjust()
+    plt.gcf().subplots_adjust(wspace=0.025, hspace=0.05)
 
 def plot(x, y, title=None, xlabel=None, ylabel=None):
     plt.plot(x, y)
