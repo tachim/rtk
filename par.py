@@ -32,7 +32,7 @@ def process_args_kwargs(args_kwargs):
     else:
         return [([a], {}) for a in args_kwargs]
 
-def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
+def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None, pool=None):
     """ Multiprocessing abstraction that includes a progress meter.
         Usage:
             def foo(x): return x * 2
@@ -45,8 +45,8 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
         n_procs = n_procs or mp.cpu_count() - 1
         if verbose:
             print 'Using', n_procs, 'processes.'
-        mp.freeze_support()
-        p = mp.Pool(n_procs)
+        #mp.freeze_support()
+        p = pool or mp.Pool(n_procs)
         ret = [None] * len(args_kwargs)
 
         processed_args = [(fn, (i, a_k)) for i, a_k in enumerate(args_kwargs)]
@@ -67,9 +67,10 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None):
 
             if super_verbose:
                 print 'Args remaining:', [arg for i, arg in enumerate(args_kwargs) if ret[i] == None]
-        p.terminate()
-        p.join()
-        del p
+        if pool is None:
+            p.terminate()
+            p.join()
+            del p
         if verbose:
             print '\n>>>>>>>>>>> DONE.', job_ind+1, '/', len(args_kwargs)
         return ret

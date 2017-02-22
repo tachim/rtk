@@ -1,6 +1,7 @@
 import cPickle as pickle
 import functools
 import hashlib
+import contextlib
 import os
 import subprocess
 import tempfile
@@ -9,6 +10,12 @@ from glob import glob
 import numpy as np
 
 class RetCode(Exception): pass
+
+def run_bg(cmd):
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    yield process
+    for line in iter(process.stdout.readline, ''):
+        yield line.strip()
 
 def run(cmd, capture_stdout=True, ignore_ret=False, print_stdout=False):
     if capture_stdout:
@@ -69,19 +76,28 @@ def makedirs(directory):
         if 'File exists' not in str(e):
             raise
 
-def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale='600:400'):
+def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale=None):
     last_dir = filter(bool, directory.split('/'))[-1]
     movie_path = '%s/%s_out.mp4' % (directory, last_dir)
     print 'Saving movie to %s/%s_out.mp4' % (directory, last_dir)
-    cmd = ['ffmpeg', '-framerate', str(framerate), 
+    cmd = ['/usr/bin/ffmpeg', '-framerate', str(framerate), 
             '-i', '%s/%s' % (directory, pattern), 
-            '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p', 
-            '-vf', 'scale=%s' % scale,
-            '-loglevel', 'quiet',
-            movie_path, '-y',
-            ]
+            '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p']
+    if scale is not None:
+        cmd += ['-vf', 'scale=%s' % scale]
+    cmd += ['-loglevel', 'quiet', movie_path, '-y']
+    print ' '.join(cmd)
     run(cmd, capture_stdout=False, print_stdout=True)
     return movie_path
 
-def tmpf(*args, **kwargs):
+def _tmpf(*args, **kwargs):
     return tempfile.mkstemp(*args, **kwargs)[1]
+
+@contextlib.contextmanager
+def tmpf(*args, **kwargs):
+    fname = _tmpf(*args, **kwargs)
+
+    try:
+        yield fname
+    finally:
+        os.remove(fname)
