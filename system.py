@@ -59,13 +59,20 @@ def filecached(dir='/tmp/', version=1):
         def wrapper(*args, **kwargs):
             k = _get_key(f, version, args, kwargs)
             fname = os.path.join(dir, f.__name__ + ':' + k + '.pickle')
-            print fname
             if not os.path.exists(fname):
                 ret = f(*args, **kwargs)
                 with open(fname, 'wb') as fptr:
                     pickle.dump(ret, fptr, pickle.HIGHEST_PROTOCOL)
             with open(fname, 'rb') as fptr:
                 return pickle.load(fptr)
+
+        def cache_exists(*args, **kwargs):
+            k = _get_key(f, version, args, kwargs)
+            fname = os.path.join(dir, f.__name__ + ':' + k + '.pickle')
+            return os.path.exists(fname)
+
+        setattr(wrapper, 'cache_exists', cache_exists)
+
         return wrapper
     return dec
 
@@ -82,7 +89,12 @@ def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale=No
     print 'Saving movie to %s/%s_out.mp4' % (directory, last_dir)
     cmd = ['/usr/bin/ffmpeg', '-framerate', str(framerate), 
             '-i', '%s/%s' % (directory, pattern), 
-            '-c:v', 'libx264', '-r', '30', '-crf', '0', '-pix_fmt', 'yuv420p']
+            '-f', 'mp4',
+            '-vf', 'format=yuv420p',
+            '-c:v', 'libx264', 
+            '-r', '30', 
+            '-crf', '0',
+            ]
     if scale is not None:
         cmd += ['-vf', 'scale=%s' % scale]
     cmd += ['-loglevel', 'quiet', movie_path, '-y']
