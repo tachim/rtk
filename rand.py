@@ -1,10 +1,22 @@
 import numpy as np
 import random
 import string
+import contextlib
 
 def seed(seed):
     random.seed(seed)
     np.random.seed(seed)
+
+@contextlib.contextmanager
+def seed_ctx(new_seed):
+    curr_state = random.getstate()
+    curr_state_np = np.random.get_state()
+
+    seed(new_seed)
+    yield
+
+    random.setstate(curr_state)
+    np.random.set_state(curr_state_np)
 
 def ones(shape):
     return np.random.randint(0, 2, shape)
