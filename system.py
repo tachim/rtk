@@ -83,11 +83,13 @@ def makedirs(directory):
         if 'File exists' not in str(e):
             raise
 
-def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale=None):
+def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale=None, verbose=False):
     last_dir = filter(bool, directory.split('/'))[-1]
     movie_path = '%s/%s_out.mp4' % (directory, last_dir)
     print 'Saving movie to %s/%s_out.mp4' % (directory, last_dir)
     cmd = ['/usr/bin/ffmpeg', '-framerate', str(framerate), 
+            '-f', 'image2',
+            '-pattern_type', 'glob',
             '-i', '%s/%s' % (directory, pattern), 
             '-f', 'mp4',
             '-vf', 'format=yuv420p',
@@ -97,7 +99,9 @@ def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale=No
             ]
     if scale is not None:
         cmd += ['-vf', 'scale=%s' % scale]
-    cmd += ['-loglevel', 'quiet', movie_path, '-y']
+    if not verbose:
+        cmd += ['-loglevel', 'quiet']
+    cmd += [movie_path, '-y']
     print ' '.join(cmd)
     run(cmd, capture_stdout=False, print_stdout=True)
     return movie_path
