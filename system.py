@@ -83,7 +83,7 @@ def makedirs(directory):
         if 'File exists' not in str(e):
             raise
 
-def make_movie(directory, pattern='frame_%?%?%?%?%?.png', framerate=15, scale=None, verbose=False):
+def make_movie(directory, pattern='frame_?????.png', framerate=15, scale=None, verbose=False):
     last_dir = filter(bool, directory.split('/'))[-1]
     movie_path = '%s/%s_out.mp4' % (directory, last_dir)
     print 'Saving movie to %s/%s_out.mp4' % (directory, last_dir)
