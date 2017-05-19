@@ -100,7 +100,7 @@ def make_movie(directory, pattern='frame_?????.png', framerate=15, scale=None, v
     if scale is not None:
         cmd += ['-vf', 'scale=%s' % scale]
     if not verbose:
-        cmd += ['-loglevel', 'quiet']
+        cmd += ['-loglevel', 'error']
     cmd += [movie_path, '-y']
     print ' '.join(cmd)
     run(cmd, capture_stdout=False, print_stdout=True)
