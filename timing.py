@@ -16,32 +16,43 @@ _timestamps = {}
 
 def reset(k):
     _timings[k] = [0., 0.]
+    del _timestamps[k]
 
 def reset_all():
     _timings.clear()
+    _timestamps.clear()
+    _last_exec.clear()
 
 class Logger(object):
-    def __init__(self, name, print_every=10, reset_timing=False, n_expected=None):
+    def __init__(self, name, print_every=10, reset_timing=False, n_expected=None, looping=False):
         self.name = name
         self.print_every = print_every
         self.n_expected = n_expected
+        self.looping = looping
+        self.duration = None
         if reset_timing:
             reset(self.name)
 
     def __enter__(self):
-        assert self.name not in _timestamps
+        assert self.looping or self.name not in _timestamps
+        if self.looping and self.name in _timestamps:
+            self.duration = time.time() - _timestamps[self.name]
         _timestamps[self.name] = time.time()
 
     def __exit__(self, typ, val, tb):
-        duration = time.time() - _timestamps[self.name]
-        del _timestamps[self.name]
+        if self.looping and self.duration is None:
+            return
+        elif not self.looping:
+            self.duration = time.time() - _timestamps[self.name]
+            del _timestamps[self.name]
+
         t = _timings[self.name]
-        t[0] = t[0] * t[1] / (t[1] + 1) + duration / (t[1] + 1)
+        t[0] = t[0] * t[1] / (t[1] + 1) + self.duration / (t[1] + 1)
         t[1] = t[1] + 1
 
         if _register_exec(__name__, 'logger%s' % self.name, self.print_every):
             print '<%s> over %d calls: %.4f. Last call: %.4f. ' % (
-                    self.name, t[1], t[0], duration),
+                    self.name, t[1], t[0], self.duration),
             if self.n_expected is not None:
                 n_completed = float(t[1])
                 n_remaining = self.n_expected - n_completed
