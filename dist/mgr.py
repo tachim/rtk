@@ -98,7 +98,7 @@ def create_jobs(run_directory, module, walltime, ppn):
 
     base_args = {
             'jobname': experiment_id,
-            'queue': 'atlas',
+            'queue': rtk.dist.config.queue,
             'walltime': walltime,
             'ppn': ppn,
             'outputfile_dir': rtk.dist.config.output_dir,
