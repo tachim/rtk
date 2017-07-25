@@ -16,7 +16,8 @@ _timestamps = {}
 
 def reset(k):
     _timings[k] = [0., 0.]
-    del _timestamps[k]
+    if k in _timestamps:
+        del _timestamps[k]
 
 def reset_all():
     _timings.clear()
