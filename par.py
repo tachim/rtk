@@ -1,3 +1,4 @@
+import subprocess as sp
 import multiprocessing as mp
 import numpy as np
 import random
@@ -7,7 +8,9 @@ import sys
 
 import timing
 
-def wrapper_fcn((fn, (i, args_kwargs))):
+def wrapper_fcn(arg_str):
+    import dill
+    fn, (i, args_kwargs) = dill.loads(arg_str)
     seed = int(random.random() * 100000)
     np.random.seed(seed)
     random.seed(seed)
@@ -39,6 +42,10 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None, pool=
             pmap(foo, [([1], {}), ([2], {})]) => [2, 4]
 
     """
+
+    sp.call('pip install dill'.split())
+    import dill
+
     global _pool_state
     try:
         args_kwargs = process_args_kwargs(args_kwargs)
@@ -50,6 +57,7 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None, pool=
         ret = [None] * len(args_kwargs)
 
         processed_args = [(fn, (i, a_k)) for i, a_k in enumerate(args_kwargs)]
+        processed_args = map(dill.dumps, processed_args)
 
         start_time = time.time()
 
