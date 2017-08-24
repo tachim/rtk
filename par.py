@@ -42,6 +42,8 @@ def pmap(fn, args_kwargs, verbose=True, super_verbose=False, n_procs=None, pool=
             pmap(foo, [([1], {}), ([2], {})]) => [2, 4]
 
     """
+    if len(args_kwargs) == 0:
+        return []
 
     sp.call('pip install dill'.split())
     import dill
