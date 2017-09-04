@@ -2,6 +2,8 @@ import collections
 import heapq
 import numpy as np
 import time
+import scipy.misc
+from PIL import Image
 
 _means_counts = collections.defaultdict(lambda: [0., 0.])
 
@@ -112,4 +114,56 @@ def a_star_sample_convex(log_f, lower_bound, upper_bound):
 
     return best_sample
 
+import torch
+import torch.utils.data
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+from torchvision import datasets, transforms
+import visdom
 
+import collections
+
+class Reporter(object):
+    def __init__(self, env, plot_suffix=None, url='http://192.168.7.67', port=8097, ratelimit_sec=2):
+        self.env = env
+        self.vis = visdom.Visdom(url, port=port, env=self.env)
+        self.stats = collections.defaultdict(list)
+        self.ratelimit_sec = ratelimit_sec
+        self.plot_suffix = plot_suffix
+
+        self.init_set = set()
+
+    def init(self, k):
+        if k in self.init_set: return
+        self.vis.line(np.array([0]), np.array([0]), win=k)
+        self.init_set.add(k)
+
+    def flush(self):
+	import rtk
+        if not rtk.timing._register_exec('h.vis.vdom.reporter', self.env, self.ratelimit_sec):
+            return
+
+        for k, vals in self.stats.iteritems():
+            title = k if self.plot_suffix is None else k + '_' + self.plot_suffix
+            self.init(k)
+            self.vis.updateTrace(Y=np.array(vals), X=np.arange(len(vals)), win=k, name=title, append=False)
+
+    def _transform(self, val):
+        if isinstance(val, Variable):
+            val = val.data
+        if type(val) in (torch.cuda.FloatTensor, torch.FloatTensor):
+            val = val.cpu().numpy().copy()
+        if isinstance(val, np.ndarray):
+            val = val.squeeze()
+        return val
+
+    def report(self, key, val):
+        self.stats[key].append(self._transform(val))
+        self.flush()
+
+    def image(self, key, img):
+        img = np.uint8((self._transform(img).astype(np.float32) + 1) * 128)
+        #img = np.uint8(scipy.misc.imresize(img, (256, 256)))
+        #img = Image.fromarray(img, mode='RGB')
+        self.vis.image(img, win=key, opts=dict(title=key))
