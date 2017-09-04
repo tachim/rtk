@@ -158,12 +158,21 @@ class Reporter(object):
             val = val.squeeze()
         return val
 
+    def _transform_img(self, img):
+        img = np.uint8((self._transform(img).astype(np.float32) + 1) * 128).transpose(1, 2, 0)
+        return img
+
     def report(self, key, val):
         self.stats[key].append(self._transform(val))
         self.flush()
 
+    def close(self, win):
+        k = win if self.plot_suffix is None else win + '_' + self.plot_suffix
+        self.vis.close(k)
+
     def image(self, key, img):
-        img = np.uint8((self._transform(img).astype(np.float32) + 1) * 128)
-        #img = np.uint8(scipy.misc.imresize(img, (256, 256)))
-        #img = Image.fromarray(img, mode='RGB')
-        self.vis.image(img, win=key, opts=dict(title=key))
+        if not isinstance(img, np.ndarray):
+            img = self._transform_img(img)
+        img = img.transpose(2, 0, 1)
+        k = key if self.plot_suffix is None else key + '_' + self.plot_suffix
+        self.vis.image(img, win=k, opts=dict(title=k))
