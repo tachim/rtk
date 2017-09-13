@@ -35,7 +35,10 @@ class Logger(object):
             reset(self.name)
 
     def __enter__(self):
-        assert self.looping or self.name not in _timestamps
+        assert self.looping or self.name not in _timestamps, \
+            'rtk.timing.Logger has already been started with name "%s". ' \
+            'Are you using multiple threads? If so, have each thread use ' \
+            'a different name.' % self.name
         if self.looping and self.name in _timestamps:
             self.duration = time.time() - _timestamps[self.name]
         _timestamps[self.name] = time.time()
@@ -58,7 +61,7 @@ class Logger(object):
                 n_completed = float(t[1])
                 n_remaining = self.n_expected - n_completed
                 time_remaining = t[0] * n_remaining
-                
+
                 print '%.4fs remaining.' % time_remaining,
             print
 
