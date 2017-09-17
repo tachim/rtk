@@ -230,6 +230,9 @@ class Reporter(object):
         k = win if self.plot_suffix is None else win + '_' + self.plot_suffix
         self.vis.close(k)
 
+    def text(self, key, txt):
+        self.vis.text(txt, win=self.title(key), opts=dict(title=self.title(key)))
+
     def image(self, key, img):
         if not isinstance(img, np.ndarray):
             img = self._transform_img(img)
