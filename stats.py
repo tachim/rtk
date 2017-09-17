@@ -123,9 +123,43 @@ from torchvision import datasets, transforms
 import visdom
 
 import collections
+import matplotlib.pyplot as plt
+
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw 
+
+def annotate(img, text):
+    img = Image.fromarray(img)
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype(
+            "/usr/local/lib/python2.7/dist-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSansMono-Bold.ttf", 
+            16)
+    draw.text((0, 0), text,(0,255,0),font=font)
+    return np.array(img)
+
+def get_plt_img():
+    fig = plt.gcf()
+    fig.savefig('/tmp/img.png', dpi=100)
+    return np.array(Image.open('/tmp/img.png'))
+
+class RollingImageHistory(object):
+    def __init__(self):
+        self.imgs = []
+
+    def add_img(self, itr, img):
+        assert itr % 100 == 0
+        self.imgs.append((itr, annotate(img, 'itr %d' % itr)))
+
+    def generate_rolling(self):
+        return np.hstack([img for _, img in self.imgs[::-1]])
 
 class Reporter(object):
-    def __init__(self, env, plot_suffix=None, url='http://192.168.7.67', port=8097, ratelimit_sec=2):
+    def __init__(self, env, 
+                  plot_suffix=None, url='http://192.168.7.67', 
+                  port=8097, ratelimit_sec=10,
+                  default_outlier_percentile=None,
+                  ):
         self.env = env
         self.vis = visdom.Visdom(url, port=port, env=self.env)
         self.stats = collections.defaultdict(list)
@@ -133,10 +167,21 @@ class Reporter(object):
         self.plot_suffix = plot_suffix
 
         self.init_set = set()
+        self.outlier_percentile = {}
+        self.default_outlier_percentile = default_outlier_percentile
+
+    def set_outlier_percentile(self, k, p):
+        self.outlier_percentile[k] = p
+
+    def title(self, k):
+        return k if self.plot_suffix is None else k + '_' + self.plot_suffix
 
     def init(self, k):
         if k in self.init_set: return
-        self.vis.line(np.array([0]), np.array([0]), win=k)
+        self.vis.line(
+                np.array([0]), np.array([0]), 
+                win=self.title(k), 
+                opts=dict(title=self.title(k)))
         self.init_set.add(k)
 
     def flush(self):
@@ -145,9 +190,24 @@ class Reporter(object):
             return
 
         for k, vals in self.stats.iteritems():
-            title = k if self.plot_suffix is None else k + '_' + self.plot_suffix
             self.init(k)
-            self.vis.updateTrace(Y=np.array(vals), X=np.arange(len(vals)), win=k, name=title, append=False)
+
+            x, y = np.arange(len(vals)), np.array(vals)
+            opts = {}
+            outlier_percentile = self.outlier_percentile.get(k, self.default_outlier_percentile)
+            if outlier_percentile is not None:
+                thresh = np.percentile(y, outlier_percentile)
+                opts['ytickmin'] = int(y.min())
+                opts['ytickmax'] = int(thresh)
+
+            opts['legend'] = False
+
+            self.vis.updateTrace(
+                    Y=y, X=x, 
+                    win=self.title(k), name=self.title(k), 
+                    append=False,
+                    opts=opts,
+                    )
 
     def _transform(self, val):
         if isinstance(val, Variable):
@@ -174,5 +234,4 @@ class Reporter(object):
         if not isinstance(img, np.ndarray):
             img = self._transform_img(img)
         img = img.transpose(2, 0, 1)
-        k = key if self.plot_suffix is None else key + '_' + self.plot_suffix
-        self.vis.image(img, win=k, opts=dict(title=k))
+        self.vis.image(img, win=self.title(key), opts=dict(title=self.title(key)))
