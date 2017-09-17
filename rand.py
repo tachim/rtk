@@ -34,3 +34,6 @@ def rand_string(length):
         random.choice(string.ascii_letters)
         for _ in xrange(length)
         ])
+
+def choice(a):
+    return a[np.random.randint(0, len(a))]
