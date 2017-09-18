@@ -141,7 +141,7 @@ def annotate(img, text):
 def get_plt_img():
     fig = plt.gcf()
     fig.savefig('/tmp/img.png', dpi=100)
-    return np.array(Image.open('/tmp/img.png'))
+    return np.array(Image.open('/tmp/img.png'))[..., :3]
 
 class RollingImageHistory(object):
     def __init__(self):
@@ -150,6 +150,9 @@ class RollingImageHistory(object):
     def add_img(self, itr, img):
         assert itr % 100 == 0
         self.imgs.append((itr, annotate(img, 'itr %d' % itr)))
+
+    def rolling_imgs(self):
+        return [img for _, img in self.imgs[::-1]]
 
     def generate_rolling(self):
         return np.hstack([img for _, img in self.imgs[::-1]])
@@ -169,6 +172,7 @@ class Reporter(object):
         self.init_set = set()
         self.outlier_percentile = {}
         self.default_outlier_percentile = default_outlier_percentile
+        self.k_to_window = {}
 
     def set_outlier_percentile(self, k, p):
         self.outlier_percentile[k] = p
@@ -180,7 +184,7 @@ class Reporter(object):
         if k in self.init_set: return
         self.vis.line(
                 np.array([0]), np.array([0]), 
-                win=self.title(k), 
+                win=self.title(self.k_to_window[k]), 
                 opts=dict(title=self.title(k)))
         self.init_set.add(k)
 
@@ -204,7 +208,7 @@ class Reporter(object):
 
             self.vis.updateTrace(
                     Y=y, X=x, 
-                    win=self.title(k), name=self.title(k), 
+                    win=self.title(self.k_to_window[k]), name=self.title(k), 
                     append=False,
                     opts=opts,
                     )
@@ -222,8 +226,9 @@ class Reporter(object):
         img = np.uint8((self._transform(img).astype(np.float32) + 1) * 128).transpose(1, 2, 0)
         return img
 
-    def report(self, key, val):
+    def report(self, key, val, win=None):
         self.stats[key].append(self._transform(val))
+        self.k_to_window[key] = win or key
         self.flush()
 
     def close(self, win):
@@ -238,3 +243,16 @@ class Reporter(object):
             img = self._transform_img(img)
         img = img.transpose(2, 0, 1)
         self.vis.image(img, win=self.title(key), opts=dict(title=self.title(key)))
+
+    def images(self, key, imgs):
+        if not isinstance(imgs[0], np.ndarray):
+            imgs = map(self._transform_img, imgs)
+        imgs = [img.transpose(2, 0, 1) for img in imgs]
+        self.vis.images(imgs, win=self.title(key), opts=dict(title=self.title(key)))
+
+    def heatmap(self, k, heatmap, xmin=None, xmax=None):
+        assert isinstance(heatmap, np.ndarray)
+        opts = dict(title=self.title(k))
+        if xmin is not None: opts['xmin'] = xmin
+        if xmax is not None: opts['xmax'] = xmax
+        self.vis.heatmap(heatmap, win=self.title(k), opts=opts)
