@@ -140,7 +140,7 @@ def annotate(img, text):
 
 def get_plt_img():
     fig = plt.gcf()
-    fig.savefig('/tmp/img.png', dpi=100)
+    fig.savefig('/tmp/img.png', dpi=120)
     return np.array(Image.open('/tmp/img.png'))[..., :3]
 
 class RollingImageHistory(object):
@@ -223,7 +223,9 @@ class Reporter(object):
         return val
 
     def _transform_img(self, img):
-        img = np.uint8((self._transform(img).astype(np.float32) + 1) * 128).transpose(1, 2, 0)
+        img = np.uint8((self._transform(img).astype(np.float32) + 1) * 128)
+        if len(img.shape) > 2:
+            img = img.transpose(1, 2, 0)
         return img
 
     def report(self, key, val, win=None):
@@ -241,16 +243,19 @@ class Reporter(object):
     def image(self, key, img):
         if not isinstance(img, np.ndarray):
             img = self._transform_img(img)
-        img = img.transpose(2, 0, 1)
+        if len(img.shape) > 2:
+            img = img.transpose(2, 0, 1)
         self.vis.image(img, win=self.title(key), opts=dict(title=self.title(key)))
 
     def images(self, key, imgs):
         if not isinstance(imgs[0], np.ndarray):
             imgs = map(self._transform_img, imgs)
-        imgs = [img.transpose(2, 0, 1) for img in imgs]
+        imgs = [img.transpose(2, 0, 1) if len(img.shape) > 2 else img for img in imgs]
         self.vis.images(imgs, win=self.title(key), opts=dict(title=self.title(key)))
 
     def heatmap(self, k, heatmap, xmin=None, xmax=None):
+        heatmap = self._transform(heatmap)
+        heatmap = heatmap[::-1]
         assert isinstance(heatmap, np.ndarray)
         opts = dict(title=self.title(k))
         if xmin is not None: opts['xmin'] = xmin
